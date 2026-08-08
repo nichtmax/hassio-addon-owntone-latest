@@ -30,7 +30,25 @@ NAME=$(jq -j --raw-output '.shairport.name // "Multiroom"' /data/options.json 2>
 
 # Fixed 44100 / S16_LE / 2ch so OwnTone always reads a consistent PCM format.
 # shairport-sync transcodes/mixes down as necessary (AirPlay 2 / FFmpeg build).
-# metadata_enabled + cover art -> the metadata pipe carries now-playing info.
+# Metadata pipe: carries now-playing info (title/artist/cover) BUT also the
+# AirPlay volume (pvol), which OwnTone reads and applies to its player volume —
+# that is what let the iPhone volume change the room level. OwnTone applies any
+# pvol it receives, so the only way to fully lock the volume is to NOT send
+# metadata. shairport.metadata_enabled option (default false) controls this.
+METADATA_ENABLED=$(jq -j --raw-output '.shairport.metadata_enabled // false' /data/options.json 2>/dev/null)
+
+if [ "$METADATA_ENABLED" = "true" ]; then
+  METADATA_BLOCK="metadata = {
+  enabled = \"yes\";
+  include_cover_art = \"yes\";
+  pipe_name = \"$METADATA_PIPE\";
+};"
+else
+  # No metadata pipe -> OwnTone never sees pvol -> volume stays locked at 100%.
+  METADATA_BLOCK=""
+  rm -f "$METADATA_PIPE"
+fi
+
 cat > "$CONF" <<CONFEOF
 general = {
   name = "$NAME";
@@ -43,11 +61,7 @@ general = {
   ignore_volume_control = "yes";
   volume_max_db = 0.0;
 };
-metadata = {
-  enabled = "yes";
-  include_cover_art = "yes";
-  pipe_name = "$METADATA_PIPE";
-};
+$METADATA_BLOCK
 pipe = {
   name = "$PIPE";
   output_rate = 44100;

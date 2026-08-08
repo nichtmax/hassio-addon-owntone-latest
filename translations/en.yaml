@@ -1,0 +1,84 @@
+configuration:
+  general:
+    name: General
+    description: Core OwnTone server settings.
+    fields:
+      admin_password:
+        name: Admin password
+        description: Admin password for the web interface. Access from computers in "trusted networks" (see below) does not require a password.
+      loglevel:
+        name: Log level
+        description: "Log level. Available levels: fatal, log, warning, info, debug, spam."
+      trusted_networks:
+        name: Trusted networks
+        description: Who is allowed to connect without authorisation. Applies to Remotes, DAAP clients (iTunes) and the web interface. Options are "any", "localhost" or the prefix of one or more IPv4/6 networks.
+  library:
+    name: Library
+    description: Music library settings.
+    fields:
+      name:
+        name: Library name
+        description: Name of the library as displayed by the clients (%h = hostname). If you change the name after pairing with Remote you may have to re-pair.
+      password:
+        name: Library password
+        description: Password for the library.
+      m3u_overrides:
+        name: m3u overrides
+        description: Should metadata from m3u playlists, e.g. artist and title in EXTINF, override the metadata from radio streams?
+      itunes_overrides:
+        name: iTunes overrides
+        description: Should iTunes metadata override ours?
+      itunes_smartpl:
+        name: iTunes smart playlists
+        description: Should we import the content of iTunes smart playlists?
+  airplay:
+    name: AirPlay devices
+    description: Per-device AirPlay settings. Make sure you get the capitalization of the device name right.
+    fields:
+      name:
+        name: Device name
+        description: Exact name of the AirPlay device (capitalization matters).
+      max_volume:
+        name: Max volume
+        description: OwnTone's volume goes to 11! If that's more than you can handle you can set a lower value here.
+      permanent:
+        name: Permanent
+        description: Keep this AirPlay device in the speaker list and ignore mDNS notifications about it no longer being present. The speaker remains until restart of OwnTone.
+      exclude:
+        name: Exclude
+        description: Exclude this AirPlay device from the speaker list.
+      password:
+        name: Password
+        description: AirPlay password.
+      raop_disable:
+        name: Disable RAOP
+        description: Disable AirPlay 1 (RAOP) for this device.
+      nickname:
+        name: Nickname
+        description: Name used in the speaker list, overrides the name from the device.
+  chromecast:
+    name: Chromecast devices
+    description: Per-device Chromecast settings. Make sure you get the capitalization of the device name right.
+    fields:
+      name:
+        name: Device name
+        description: Exact name of the Chromecast device (capitalization matters).
+      max_volume:
+        name: Max volume
+        description: OwnTone's volume goes to 11! If that's more than you can handle you can set a lower value here.
+      exclude:
+        name: Exclude
+        description: Exclude this device from the speaker list.
+      nickname:
+        name: Nickname
+        description: Name used in the speaker list, overrides the name from the device.
+  shairport:
+    name: Shairport (AirPlay receiver)
+    description: Built-in shairport-sync AirPlay receiver that pipes audio into OwnTone for multiroom redistribution.
+    fields:
+      name:
+        name: Advertised name
+        description: AirPlay name advertised by shairport-sync.
+      metadata_enabled:
+        name: Metadata
+        description: Forward now-playing metadata (title/artist/cover) to OwnTone. Note that the metadata pipe also carries the AirPlay source volume (pvol), which OwnTone applies to the player volume — disable this to fully lock the volume.

@@ -1,47 +1,33 @@
-# Home Assistant Owntone AddOn (known as forked-daapd)
+# Home Assistant OwnTone Add-on (with AirPlay multiroom ingress)
 
-Based on [docker-daapd](https://github.com/linuxserver/docker-daapd), with spotify, chromecast and airplay and enable the possibility to run the Owntone Server - forked daapd - on your Raspberry Pi. The configuration is implemented and will give you the possibility to adjust the Owntone server in Home Assistant by your need. 
+Run [OwnTone](https://owntone.github.io/owntone-server/) 28.10 — a DAAP (iTunes) media server with AirPlay, Chromecast, MPD and internet radio support — as a Home Assistant add-on. Based on [docker-daapd](https://github.com/linuxserver/docker-daapd).
 
-## Supported Architectures
+**What this fork adds** over [mynameisdaniel32/hassio-addon-owntone-latest](https://github.com/mynameisdaniel32/hassio-addon-owntone-latest):
 
-The addon support multiple architectures such as  armv7, aarch64, amd64. *Only tested on aarch64 Raspberry Pi 4b yet*
+- **Built-in shairport-sync AirPlay receiver.** AirPlay from your phone to the add-on ("Multiroom" by default); shairport-sync writes raw PCM into a pipe that OwnTone reads and redistributes to all enabled AirPlay outputs. Phone → every room, in sync.
+- **OwnTone 28.10** (upgraded from 28.6) with the config corruption bugs fixed.
+- **Host networking**, required for AirPlay/mDNS discovery of the receiver.
+
+## Supported architectures
+
+`aarch64` and `amd64`. Tested on aarch64 (HAOS).
 
 ## Installation
-In Homeassistent go to `Supervisor` -> `AddOn Store`, click on the three vertical dots in the top right corner and on `Repositories`. Add the URL of this GitHub page into the Input field and click okay. After some seconds, there should be a `Owntone server` AddOn in your list. After a click on this tile, it's possible to install as any other Home Assistant AddOn. 
 
-This AddOn will operate in the `/share/owntone` folder that contains a folder named `dbase_and_logs` that is used for configurations and logs. The folder named `music` is the place, where the iTunes libary or music at needs to be stored.
+In Home Assistant go to **Settings → Apps → App Store**, click the three dots in the top right corner → **Repositories**, add `https://github.com/nichtmax/hassio-addon-owntone-latest` and confirm. The **Owntone server** app appears in the list; install it like any other app.
+
+The app operates in the `/share/owntone` folder: `dbase_and_logs/` holds the database, config and logs; `music/` is where your music and playlists go. The AirPlay pipes also live in `music/` so OwnTone's library watcher sees them.
 
 ## Configuration
-| Configuration Key | Default Value | Description |
-| ------ | ------ | ------ |
-| general.admin_password | `''` | Admin password for the web interface. Note that access to the web interface from computers in "trusted_network" (see below) does not require password
-| general.loglevel | `log` | Log level. Available levels: `fatal`, `log`, `warning`, `info`, `debug`, `spam`
-| general.trusted_networks | `{ "localhost", "192.168", "172.17", "172.30" }` | Sets who is allowed to connect without authorisation. This applies to client types like Remotes, DAAP clients (iTunes) and to the web interface. Options are "any", "localhost" or the prefix to one or more ipv4/6 networks. |
-| library.name | `Hassio music` | Name of the library as displayed by the clients (%h: hostname). If you change the name after pairing with Remote you may have to re-pair. |
-| library.password | `''` | Password for the library. |
-| library.m3u_overrides | `false` | Should metadata from m3u playlists, e.g. artist and title in EXTINF, override the metadata we get from radio streams? |
-| library.itunes_overrides | `false` | Should iTunes metadata override ours? |
-| library.itunes_smartpl | `false` | Should we import the content of iTunes smart playlists? |
-| airplay | `[]` | AirPlay per device settings (make sure you get the capitalization of the device name right) |
-| airplay[].name || make sure you get the capitalization of the device name right |
-| airplay[].max_volume || OwnTone's volume goes to 11! If that's more than you can handle you can set a lower value here |
-| airplay[].permanent || Enable this option to keep a particular AirPlay device in the speaker list and thus ignore mdns notifications about it no longer being present. The speaker will remain until restart of OwnTone. |
-| airplay[].exclude || Enable this option to exclude a particular AirPlay device from the speaker list |
-| airplay[].password || AirPlay password |
-| airplay[].raop_disable || Disable AirPlay 1 (RAOP) |
-| airplay[].nickname || Name used in the speaker list, overrides name from the device |
-| chromecast | `[]` | Chromecast per device settings  (make sure you get the capitalization of the device name right) |
-| chromecast[].name || make sure you get the capitalization of the device name right
-| chromecast[].max_volume || OwnTone's volume goes to 11! If that's more than you can handle you can set a lower value here
-| chromecast[].exclude || Enable this option to exclude a particular device from the speaker list
-| chromecast[].nickname || Name used in the speaker list, overrides name from the device
-| spotify.use_libspotify | `false` | Spotify settings |
-| spotify.settings_dir' | `/share/owntone/libspotify` | The server can stream from Spotify using either its own implementation or using Spotify's libspotify (which was deprecated many years ago) - take care that this folder is created before starting the server |
-| spotify.cache_dir | `/tmp` | Cache directory (only has effect with libspotify) |
-| spotify.bitrate |  `0` | Set preferred bitrate for music streaming (0: No preference (default), 1: 96kbps, 2: 160kbps, 3: 320kbps) |
-| spotify.base_playlist_disable | `false` | Your Spotify playlists will by default be put in a "Spotify" playlist folder. If you would rather have them together with your other playlists you can set this option to true. |
-| spotify.artist_override | `false` | Spotify playlists usually have many artist, and if you don't want every artist to be listed when artist browsing in Remote, you can set the artist_override flag to true. This will use the compilation_artist as album artist for Spotify items. |
-| spotify.album_override | `false` | Similar to the different artists in Spotify playlists, the playlist items belong to different albums, and if you do not want every album to be listed when browsing in Remote, you can set the album_override flag to true. This will use the playlist name as album name for Spotify items. Notice that if an item is in more than one playlist, it will only appear in one album when browsing (in which album is random). |
+
+Each configuration key is documented inline in the add-on's **Configuration** tab in Home Assistant (the descriptions come from `translations/en.yaml`, keyed under `configuration.<group>.fields.<key>`).
+
+Available option groups (see `config.yml` for defaults and the full schema):
+
+- `general` — admin password, log level, trusted networks
+- `library` — library name/password and iTunes/m3u metadata overrides
+- `airplay` / `chromecast` — per-device settings (name, max volume, exclude, nickname, …)
+- `shairport` — built-in shairport-sync AirPlay receiver (advertised name, metadata)
 
 ### Examples
 #### HomePod
@@ -54,13 +40,16 @@ airplay:
 ## Considerations
 
 ### AirPlay 2
-This Owntone server supports Airplay 2 but only if your devices are not requesting any password. To enable your HomePods to work with Home Assistent together it's required to open the Home App on the iPhone / iPad and click on the small home icon in the top left corner -> `Home Settings` -> `Allow access` and set it to `All in the same network`.
+OwnTone supports AirPlay 2 but only to devices that don't request a password. To make HomePods work with it, open the Home app on your iPhone/iPad → home icon (top left) → **Home Settings → Allow access** → set it to **All in the same network**.
 
-### Stability 
-This AddOn runs in docker with the default network `bridge` mode. Whenever we tried it to set to `host`, the docker container crashed after some minutes and the whole Raspberry PI needs to be restarted. It's tested with AirPlay devices and OwnTone was able to discover them even without a working MultiCast network possibility. 
+### Networking
+This app runs with `host_network: true`. AirPlay/mDNS discovery is multicast and does not cross the Docker bridge NAT, so in bridge mode the shairport-sync receiver would be invisible to phones on the LAN. With host networking, all ports (3689 web/API, 3688 websocket, 6600 MPD, 3690/3691 AirPlay, 5000 + 6001–6003 shairport-sync) bind directly on the host.
+
+### Volume behavior
+With the default `shairport.metadata_enabled: false`, the AirPlay source's volume is ignored — audio always passes through at 100% and room volume is controlled per output in OwnTone. Enabling metadata gives you now-playing info (title/artist/cover) but also lets the source's volume control OwnTone's master volume.
 
 ## Credits
-Insipred by https://github.com/Ulrar/hassio-addons/tree/master/forked-daapd
+Originally inspired by https://github.com/Ulrar/hassio-addons/tree/master/forked-daapd and forked from https://github.com/mynameisdaniel32/hassio-addon-owntone-latest.
 
 ## License
 

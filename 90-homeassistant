@@ -200,4 +200,5 @@ if [ ! -z $AIRPLAY_DEVICES ] && [ "$AIRPLAY_DEVICES" -ge "1" ]; then
 	done
 fi
 
-
+# Persist the generated config so it survives container restarts
+cp $CONFIG_PATH /share/owntone/dbase_and_logs/owntone.conf

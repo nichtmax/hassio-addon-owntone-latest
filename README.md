@@ -56,4 +56,3 @@ Originally inspired by https://github.com/Ulrar/hassio-addons/tree/master/forked
 MIT
 
 **Free Software, Hell Yeah!**
-

@@ -33,6 +33,23 @@ fi
 # no-op on a healthy config, where the spotify section is fully commented out.
 sed -i -e '/^spotify {/,/^}$/d' $CONFIG_PATH
 
+# OwnTone 28.10 stores its artwork/DACP cache as daap.db inside cache_dir.
+# The template default (/var/cache/owntone) is not writable by the abc user in
+# this image, so the cache was disabled at runtime ("Could not open
+# '/var/cache/owntone/daap.db'"). Point cache_dir at the persistent share.
+# Applied after the persisted-config overlay so it also fixes configs carried
+# forward from older versions that never had a cache_dir line.
+sed -i -e '/^#\?general {$/,/^#\?}$/s|^#\?[[:space:]]*cache_dir = .*|     cache_dir = "/share/owntone/dbase_and_logs"|' $CONFIG_PATH
+if ! grep -q '^[[:space:]]*cache_dir = "/share/owntone/dbase_and_logs"' $CONFIG_PATH; then
+	# No cache_dir line at all (legacy persisted config) — insert one right
+	# after the "general {" header. Uses a literal newline in the replacement
+	# so it works with any sed flavor.
+	sed -i -e '/^#\?general {/{
+s//general {\
+     cache_dir = "\/share\/owntone\/dbase_and_logs"/
+}' $CONFIG_PATH
+fi
+
 # General
 
 PASSWORD=$(jq -j --raw-output '.general.admin_password // empty' $OPTIONS_PATH)

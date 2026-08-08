@@ -1,5 +1,16 @@
 # Changelog
 
+## 28.10-shairport16
+
+- Fix the artwork/DACP cache: OwnTone 28.10 keeps it as `daap.db` inside
+  `cache_dir`, whose template default `/var/cache/owntone` is not writable by
+  the `abc` user — the cache was disabled at runtime ("Could not open
+  '/var/cache/owntone/daap.db'"). Both the Dockerfile and linuxserver's init
+  seds still targeted the 28.9-era `cache.db` filename, so nothing rewrote it.
+  `cache_dir` is now set to `/share/owntone/dbase_and_logs` both at build time
+  and at every start (after the persisted-config overlay, with an insert
+  fallback for legacy configs that have no `cache_dir` line at all).
+
 ## 28.10-shairport15
 
 - Add `translations/en.yaml`: friendly names and descriptions for every

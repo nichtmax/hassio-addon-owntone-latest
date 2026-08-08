@@ -1,0 +1,47 @@
+#!/command/with-contenv bash
+# shairport-sync: AirPlay receiver that writes raw PCM to a named pipe.
+# OwnTone watches the same pipe (pipe_autostart) and redistributes the audio
+# to every enabled AirPlay output -> phone AirPlay ingress to all rooms.
+
+PIPE=/share/owntone/music/AirPlay
+CONF=/tmp/shairport-sync.conf
+
+# Ensure the pipe exists and is readable by the owntone (abc) user.
+if [ ! -p "$PIPE" ]; then
+  rm -f "$PIPE"
+  mkfifo -m 666 "$PIPE"
+fi
+chown abc:abc "$PIPE" 2>/dev/null || true
+
+# Advertised AirPlay name (from add-on options, default "Multiroom").
+NAME=$(jq -j --raw-output '.shairport.name // "Multiroom"' /data/options.json 2>/dev/null)
+[ -z "$NAME" ] && NAME="Multiroom"
+
+# Fixed 44100 / S16_LE / 2ch so OwnTone always reads a consistent PCM format.
+# shairport-sync transcodes/mixes down as necessary (AirPlay 2 / FFmpeg build).
+cat > "$CONF" <<CONFEOF
+general = {
+  name = "$NAME";
+  output_backend = "pipe";
+};
+pipe = {
+  name = "$PIPE";
+  output_rate = 44100;
+  output_format = "S16_LE";
+  output_channels = 2;
+};
+CONFEOF
+
+echo "[shairport-sync] starting, advertising as \"$NAME\", pipe -> $PIPE"
+
+# Keep the pipe held open for writing so OwnTone's reader doesn't see EOF
+# between AirPlay sessions (which would make it stop watching the pipe).
+sleep infinity > "$PIPE" &
+HOLDER=$!
+
+shairport-sync -c "$CONF"
+EXIT=$?
+
+# If shairport-sync exits, stop holding the pipe open.
+kill "$HOLDER" 2>/dev/null || true
+exit $EXIT

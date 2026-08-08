@@ -2,7 +2,12 @@ FROM linuxserver/daapd:latest
 
 ARG BUILD_ARCH
 
-RUN apk add --no-cache jq
+# jq: parse add-on options in the init script.
+# shairport-sync: AirPlay receiver for phone -> pipe -> OwnTone ingress.
+#   Fall back to Alpine edge/community if the base image's repos don't carry it.
+RUN apk add --no-cache jq \
+    && (apk add --no-cache shairport-sync \
+        || apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community shairport-sync)
 
 RUN sed -i -e s#"ipv6 = yes"#"ipv6 = no"#g /etc/owntone.conf.orig \
     && sed -i s#/srv/music#/share/owntone/music#g /etc/owntone.conf.orig \
@@ -24,3 +29,6 @@ RUN sed -i -e s#"ipv6 = yes"#"ipv6 = no"#g /etc/owntone.conf.orig \
 ADD 90-homeassistant /etc/cont-init.d/90-homeassistant
 
 RUN chmod +x /etc/cont-init.d/90-homeassistant
+
+# shairport-sync service (s6-overlay, linuxserver base).
+COPY rootfs /

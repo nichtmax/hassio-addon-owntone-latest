@@ -17,7 +17,11 @@ RUN echo "cachebust: ${CACHEBUST}" \
         || apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community shairport-sync) \
     && shairport-sync -V
 
-RUN sed -i -e s#"ipv6 = yes"#"ipv6 = no"#g /etc/owntone.conf.orig \
+# Upstream 28.10 ships "# ipv6 = no" (commented = IPv6 enabled by default).
+# The old sed targeted 'ipv6 = yes' which no longer exists -> dead no-op.
+# Uncomment the explicit "no" to actually disable IPv6 (silences fe80:: mDNS
+# noise on the LAN; the network here is IPv4-centric).
+RUN sed -i -e 's|^#\{0,1\}[[:space:]]*ipv6 = .*|        ipv6 = no|' /etc/owntone.conf.orig \
     && sed -i s#/srv/music#/share/owntone/music#g /etc/owntone.conf.orig \
     && sed -i s#/var/cache/owntone/songs3.db#/share/owntone/dbase_and_logs/songs3.db#g /etc/owntone.conf.orig \
     && sed -i s#/var/cache/owntone/cache.db#/share/owntone/dbase_and_logs/cache.db#g /etc/owntone.conf.orig \

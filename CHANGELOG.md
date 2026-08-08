@@ -1,5 +1,15 @@
 # Changelog
 
+## 28.10-shairport17
+
+- Actually disable IPv6: the old sed targeted `ipv6 = yes`, which upstream
+  28.10 no longer ships (it is `# ipv6 = no`, commented = enabled). Now
+  uncomments the explicit `ipv6 = no`, silencing the fe80:: mDNS warnings.
+  No-op on the IPv4-centric LAN.
+- Removed the stale `shairport-sync-audio`/`shairport-sync-metadata` symlinks
+  from the music dir (left over from an early pipe naming iteration) that
+  caused scan-skip warnings on every library scan.
+
 ## 28.10-shairport16
 
 - Fix the artwork/DACP cache: OwnTone 28.10 keeps it as `daap.db` inside

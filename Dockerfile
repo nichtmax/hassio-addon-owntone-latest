@@ -1,4 +1,7 @@
-FROM linuxserver/daapd:latest
+# Pin to a multi-arch manifest (amd64+arm64). linuxserver/daapd:latest is an
+# empty/deprecated manifest with no platform images, which broke the build.
+# 28.10.20250118 = OwnTone 28.10, newest tag with arm64 (aarch64) support.
+FROM linuxserver/daapd:28.10.20250118
 
 ARG BUILD_ARCH
 

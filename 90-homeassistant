@@ -20,6 +20,15 @@ CONFIG_PATH=/etc/owntone.conf
 
 cp /share/owntone/dbase_and_logs/owntone.conf $CONFIG_PATH
 
+# Self-heal: a previous run's init corrupted the persisted config by deleting
+# the "spotify {" header (and its closing brace) while leaving the section body
+# behind. Those orphaned active lines are then parsed as part of the preceding
+# airplay_shared block -> "config: [airplay_shared:969] no such option 'spotify'".
+# Remove ANY active (non-commented) spotify section -- header, body, and closing
+# brace -- so a corrupted persisted config is repaired on every start. This is a
+# no-op on a healthy config, where the spotify section is fully commented out.
+sed -i -e '/^spotify {/,/^}$/d' $CONFIG_PATH
+
 # General
 
 PASSWORD=$(jq -j --raw-output '.general.admin_password // empty' $OPTIONS_PATH)

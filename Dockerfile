@@ -20,14 +20,20 @@ RUN sed -i -e s#"ipv6 = yes"#"ipv6 = no"#g /etc/owntone.conf.orig \
     && sed -i "/websocket_port\ =/ s/# *//" /etc/owntone.conf.orig \
     && sed -i "/trusted_networks\ =/ s/# *//" /etc/owntone.conf.orig \
     && sed -i "/pipe_autostart\ =/ s/# *//" /etc/owntone.conf.orig \
-    && sed -i "/airplay_shared/ s/# *//" /etc/owntone.conf.orig \
-    && sed -i "/control_port\ =/ s/#/ /" /etc/owntone.conf.orig \
-    && sed -i "/timing_port\ =/ s/#/ /" /etc/owntone.conf.orig \
-    && sed -i "/timing_port/{N;s/\n#/\n/}" /etc/owntone.conf.orig \
-    && sed -i "s/\(control_port =\).*/\1 3690/" /etc/owntone.conf.orig \
-    && sed -i "s/\(timing_port =\).*/\1 3691/" /etc/owntone.conf.orig \
     && sed -i "/type\ =/ s/#/ /" /etc/owntone.conf.orig \
     && sed -i 's/\(type =\).*/\1 "pulseaudio"/' /etc/owntone.conf.orig
+
+# airplay_shared: the old seds uncommented the opening "#airplay_shared {" and
+# the two port lines but NEVER the closing "#}", so the block swallowed every
+# section below it (including spotify) until the next "}" -> OwnTone 28.10 FATAL
+# "config: [airplay_shared:969] no such option 'spotify'". Uncomment the opening
+# and both port lines, set the ports, then close the block with awk (uncomment
+# the first "#}" that appears after "airplay_shared {").
+RUN sed -i 's/^#airplay_shared {/airplay_shared {/' /etc/owntone.conf.orig \
+    && sed -i 's/^#       control_port = 0/        control_port = 3690/' /etc/owntone.conf.orig \
+    && sed -i 's/^#       timing_port = 0/        timing_port = 3691/' /etc/owntone.conf.orig \
+    && awk 'BEGIN{inb=0} /^airplay_shared \{/{inb=1} inb && /^#\}/{sub(/^#\}/,"}"); inb=0} {print}' /etc/owntone.conf.orig > /etc/owntone.conf.tmp \
+    && mv /etc/owntone.conf.tmp /etc/owntone.conf.orig
 
 ADD 90-homeassistant /etc/cont-init.d/90-homeassistant
 

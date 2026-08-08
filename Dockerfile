@@ -8,9 +8,14 @@ ARG BUILD_ARCH
 # jq: parse add-on options in the init script.
 # shairport-sync: AirPlay receiver for phone -> pipe -> OwnTone ingress.
 #   Fall back to Alpine edge/community if the base image's repos don't carry it.
-RUN apk add --no-cache jq \
+# CACHEBUST forces Docker to re-run this layer (and the COPY below) instead of
+# serving a stale cached image that predates shairport-sync.
+ARG CACHEBUST=1
+RUN echo "cachebust: ${CACHEBUST}" \
+    && apk add --no-cache jq \
     && (apk add --no-cache shairport-sync \
-        || apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community shairport-sync)
+        || apk add --no-cache --repository=https://dl-cdn.alpinelinux.org/alpine/edge/community shairport-sync) \
+    && shairport-sync -V
 
 RUN sed -i -e s#"ipv6 = yes"#"ipv6 = no"#g /etc/owntone.conf.orig \
     && sed -i s#/srv/music#/share/owntone/music#g /etc/owntone.conf.orig \

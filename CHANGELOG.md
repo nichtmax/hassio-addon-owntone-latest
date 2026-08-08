@@ -1,5 +1,13 @@
 # Changelog
 
+## 28.10-shairport18
+
+- Silence the libmdns WARN spam (`dropping truncated packet` /
+  `couldn't parse packet`) that flooded the app log on any LAN with active
+  mDNS. OwnTone's mDNS advertiser is the Rust libmdns crate using env_logger,
+  so it ignores OwnTone's own loglevel — set `RUST_LOG=warn,libmdns=error`
+  via the app's environment key.
+
 ## 28.10-shairport17
 
 - Actually disable IPv6: the old sed targeted `ipv6 = yes`, which upstream

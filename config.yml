@@ -1,5 +1,5 @@
 name: Owntone server
-version: 28.10-shairport17
+version: 28.10-shairport18
 slug: owntone-server
 description: OwnTone is a Linux/FreeBSD DAAP (iTunes) media server with support for AirPlay devices, Apple Remote (and compatibles), MPD, Spotify, Chromecast, mp3 streaming and internet radio. It allows you to share your music collection over the local network.
 arch:
@@ -16,6 +16,13 @@ map:
 host_network: true
 host_dbus: false
 host_ipc: false
+# OwnTone's mDNS advertiser is the Rust libmdns crate, whose env_logger reads
+# RUST_LOG (independent of OwnTone's own loglevel). Its fsm module spams
+# "dropping truncated packet" / "couldn't parse packet" WARN lines for the
+# constant mDNS chatter on a busy LAN. Suppress the whole crate; everything
+# else keeps the default warn level.
+environment:
+  RUST_LOG: "warn,libmdns=error"
 ingress: true
 init: false
 hassio_api: false

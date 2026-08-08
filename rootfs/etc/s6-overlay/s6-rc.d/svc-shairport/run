@@ -6,14 +6,23 @@
 # to every enabled AirPlay output -> phone AirPlay ingress to all rooms.
 
 PIPE=/share/owntone/music/AirPlay
+METADATA_PIPE=/share/owntone/music/AirPlay.metadata
 CONF=/tmp/shairport-sync.conf
 
-# Ensure the pipe exists and is readable by the owntone (abc) user.
+# Ensure the audio pipe exists and is readable by the owntone (abc) user.
 if [ ! -p "$PIPE" ]; then
   rm -f "$PIPE"
   mkfifo -m 666 "$PIPE"
 fi
 chown abc:abc "$PIPE" 2>/dev/null || true
+
+# Ensure the metadata pipe exists (track title/artist/album/cover from the
+# AirPlay source -> readable by anything that wants now-playing info).
+if [ ! -p "$METADATA_PIPE" ]; then
+  rm -f "$METADATA_PIPE"
+  mkfifo -m 666 "$METADATA_PIPE"
+fi
+chown abc:abc "$METADATA_PIPE" 2>/dev/null || true
 
 # Advertised AirPlay name (from add-on options, default "Multiroom").
 NAME=$(jq -j --raw-output '.shairport.name // "Multiroom"' /data/options.json 2>/dev/null)
@@ -21,10 +30,16 @@ NAME=$(jq -j --raw-output '.shairport.name // "Multiroom"' /data/options.json 2>
 
 # Fixed 44100 / S16_LE / 2ch so OwnTone always reads a consistent PCM format.
 # shairport-sync transcodes/mixes down as necessary (AirPlay 2 / FFmpeg build).
+# metadata_enabled + cover art -> the metadata pipe carries now-playing info.
 cat > "$CONF" <<CONFEOF
 general = {
   name = "$NAME";
   output_backend = "pipe";
+};
+metadata = {
+  enabled = "yes";
+  include_cover_art = "yes";
+  pipe_name = "$METADATA_PIPE";
 };
 pipe = {
   name = "$PIPE";
@@ -34,7 +49,7 @@ pipe = {
 };
 CONFEOF
 
-echo "[shairport-sync] starting, advertising as \"$NAME\", pipe -> $PIPE"
+echo "[shairport-sync] starting, advertising as \"$NAME\", audio -> $PIPE, metadata -> $METADATA_PIPE"
 
 # Keep the pipe held open for writing so OwnTone's reader doesn't see EOF
 # between AirPlay sessions (which would make it stop watching the pipe).

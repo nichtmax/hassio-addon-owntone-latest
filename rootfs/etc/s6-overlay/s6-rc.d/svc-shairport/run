@@ -35,6 +35,9 @@ cat > "$CONF" <<CONFEOF
 general = {
   name = "$NAME";
   output_backend = "pipe";
+  // Ignore the AirPlay source's volume control: always pass audio through at
+  // full level (100%). Room volume is controlled per-output in OwnTone instead.
+  ignore_volume_control = "yes";
 };
 metadata = {
   enabled = "yes";

@@ -67,6 +67,17 @@ if [ ! -z "$LOGLEVEL" ]; then
 	sed -i -e "/^#\?general {$/,/^#\?}$/s/^#\?\s*loglevel = .*/loglevel = \"${LOGLEVEL}\"/" $CONFIG_PATH
 fi
 
+# High-resolution clock (template default is yes). Try disabling on unusual
+# platforms if audio drop-outs occur. Both directions are enforced so toggling
+# the option in the UI always takes effect, even on a persisted config.
+HIGH_RES_CLOCK=$(jq -j --raw-output '.general.high_resolution_clock // empty' $OPTIONS_PATH)
+
+if [ "$HIGH_RES_CLOCK" = "false" ]; then
+	sed -i -e "/^#\?general {$/,/^#\?}$/s|^#\?[[:space:]]*high_resolution_clock = .*|\thigh_resolution_clock = no|" $CONFIG_PATH
+elif [ "$HIGH_RES_CLOCK" = "true" ]; then
+	sed -i -e "/^#\?general {$/,/^#\?}$/s|^#\?[[:space:]]*high_resolution_clock = .*|\thigh_resolution_clock = yes|" $CONFIG_PATH
+fi
+
 # Library
 LIBRARY=$(jq -j --raw-output '.library? | length' $OPTIONS_PATH)
 if [ ! -z $LIBRARY ] && [ "$LIBRARY" -ge "1" ]; then

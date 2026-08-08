@@ -1,5 +1,11 @@
 # Changelog
 
+## 28.10-shairport19
+
+- New option `general.high_resolution_clock` (default: enabled, matching the
+  template default) to toggle OwnTone's high-resolution playback clock.
+  Only disable on unusual platforms if you experience audio drop-outs.
+
 ## 28.10-shairport18
 
 - Silence the libmdns WARN spam (`dropping truncated packet` /

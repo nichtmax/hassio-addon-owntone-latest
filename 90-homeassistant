@@ -18,7 +18,11 @@ chown -R abc:abc /share/owntone/dbase_and_logs /share/owntone /share/owntone/mus
 OPTIONS_PATH=/data/options.json
 CONFIG_PATH=/etc/owntone.conf
 
-cp /share/owntone/dbase_and_logs/owntone.conf $CONFIG_PATH
+# Start from the default config, then overlay the persisted config if it exists
+cp /etc/owntone.conf.orig $CONFIG_PATH
+if [ -f /share/owntone/dbase_and_logs/owntone.conf ]; then
+    cp /share/owntone/dbase_and_logs/owntone.conf $CONFIG_PATH
+fi
 
 # Self-heal: a previous run's init corrupted the persisted config by deleting
 # the "spotify {" header (and its closing brace) while leaving the section body

@@ -51,15 +51,12 @@ CONFEOF
 
 echo "[shairport-sync] starting, advertising as \"$NAME\", audio -> $PIPE, metadata -> $METADATA_PIPE"
 
-# Keep the pipe held open for writing so OwnTone's reader doesn't see EOF
-# between AirPlay sessions (which would make it stop watching the pipe).
-sleep infinity > "$PIPE" &
-HOLDER=$!
+# NOTE: no "sleep infinity > $PIPE" holder. Holding the pipe open made OwnTone's
+# pipe_autostart treat it as perpetually having data, so the AirPlay pipe track
+# was re-queued after every queue/clear and sat at position 0 ahead of radio
+# stations. shairport-sync opens the pipe itself when a stream starts, so the
+# pipe only queues during an actual AirPlay session.
 
 # Run as the abc user like the owntone service does.
 s6-setuidgid abc shairport-sync -c "$CONF"
-EXIT=$?
-
-# If shairport-sync exits, stop holding the pipe open.
-kill "$HOLDER" 2>/dev/null || true
-exit $EXIT
+exit $?

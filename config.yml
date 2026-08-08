@@ -1,5 +1,5 @@
 name: Owntone server
-version: 28.10-shairport
+version: 28.10-shairport2
 slug: owntone-server
 description: OwnTone is a Linux/FreeBSD DAAP (iTunes) media server with support for AirPlay devices, Apple Remote (and compatibles), MPD, Spotify, Chromecast, mp3 streaming and internet radio. It allows you to share your music collection over the local network.
 arch:
@@ -65,14 +65,6 @@ options:
     itunes_smartpl: false
   airplay: []
   chromecast: []
-  spotify:
-    use_libspotify: false
-    settings_dir: "/share/owntone/libspotify"
-    cache_dir: "/tmp"
-    bitrate: 0
-    base_playlist_disable: false
-    artist_override: false
-    album_override: false
   shairport:
     name: "Multiroom"
 
@@ -96,20 +88,10 @@ schema:
       raop_disable: bool?
       nickname: str?
 
-  spotify:
-    use_libspotify: bool?
-    settings_dir: str?
-    cache_dir: str?
-    bitrate: int?
-    base_playlist_disable: bool?
-    artist_override: bool?
-    album_override: bool?
-
   chromecast:
     - name: str
       max_volume: int?
       exclude: bool?
       nickname: str?
-
   shairport:
     name: str?

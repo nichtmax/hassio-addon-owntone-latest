@@ -71,45 +71,16 @@ if [ ! -z $LIBRARY ] && [ "$LIBRARY" -ge "1" ]; then
 fi
 
 # Spotify
-SPOTIFY=$(jq -j --raw-output '.spotify.use_libspotify // empty' $OPTIONS_PATH)
-if [ ! -z "$SPOTIFY" ] && [ "$SPOTIFY" = "true" ]; then
-
-	sed -i -e "/^#\?spotify {$/,/^#\?}$/s/^#\?\s*use_libspotify = .*/use_libspotify = ${SPOTIFY}/" $CONFIG_PATH
-
-	SETTINGS_DIR=$(jq -j --raw-output '.spotify.settings_dir // empty' $OPTIONS_PATH)
-	if [ ! -z "$SETTINGS_DIR" ]; then
-		sed -i -e "/^#\?spotify {$/,/^#\?}$/s/^#\?\s*settings_dir = .*/settings_dir = \"${SETTINGS_DIR}\"/" $CONFIG_PATH
-	fi
-
-	CACHE_DIR=$(jq -j --raw-output '.spotify.cache_dir // empty' $OPTIONS_PATH)
-	if [ ! -z "$CACHE_DIR" ]; then
-		sed -i -e "/^#\?spotify {$/,/^#\?}$/s/^#\?\s*cache_dir = .*/cache_dir = \"${CACHE_DIR}\"/" $CONFIG_PATH
-	fi
-
-	BITRATE=$(jq -j --raw-output '.spotify.bitrate // empty' $OPTIONS_PATH)
-	if [ ! -z "$BITRATE" ]; then
-		sed -i -e "/^#\?spotify {$/,/^#\?}$/s/^#\?\s*bitrate = .*/bitrate = ${BITRATE}/" $CONFIG_PATH
-	fi
-
-	BASE_PLAYLIST_DISABLE=$(jq -j --raw-output '.spotify.base_playlist_disable // empty' $OPTIONS_PATH)
-	if [ ! -z "$BASE_PLAYLIST_DISABLE" ]; then
-		sed -i -e "/^#\?spotify {$/,/^#\?}$/s/^#\?\s*base_playlist_disable = .*/base_playlist_disable = ${BASE_PLAYLIST_DISABLE}/" $CONFIG_PATH
-	fi
-
-	ALBUM_OVERRIDE=$(jq -j --raw-output '.spotify.album_override // empty' $OPTIONS_PATH)
-	if [ ! -z "$ALBUM_OVERRIDE" ]; then
-		sed -i -e "/^#\?spotify {$/,/^#\?}$/s/^#\?\s*album_override = .*/album_override = ${ALBUM_OVERRIDE}/" $CONFIG_PATH
-	fi
-
-	ARTIST_OVERRIDE=$(jq -j --raw-output '.spotify.artist_override // empty' $OPTIONS_PATH)
-	if [ ! -z "$ARTIST_OVERRIDE" ]; then
-		sed -i -e "/^#\?spotify {$/,/^#\?}$/s/^#\?\s*artist_override = .*/artist_override = ${ARTIST_OVERRIDE}/" $CONFIG_PATH
-	fi
-
-else
-	sed -i -e "/^#\?spotify {$/,/^#\?\}$/d" $CONFIG_PATH
-fi;
-
+# OwnTone 28.10 removed the use_libspotify option and ships a valid, fully
+# commented-out spotify {} section by default. The old block below either wrote
+# a removed option (use_libspotify) or, in the else branch, ran a sed range
+# (/^#\?spotify {$/,/^#\?\}$/d) that deleted "spotify {" through the next "}"
+# and left the section body orphaned -> the orphaned lines were then parsed as
+# part of the preceding airplay_shared block, causing:
+#   config: [airplay_shared:969] no such option 'spotify'
+# Since Spotify is not used here, leave the default commented section untouched
+# and do nothing. (To re-enable Spotify options later, set them explicitly
+# against the 28.10 schema.)
 # ChromeCast 
 CHROMECAST_DEVICES=$(jq -j --raw-output '.chromecast[]? | length' $OPTIONS_PATH)
 

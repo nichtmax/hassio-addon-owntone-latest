@@ -1,5 +1,5 @@
 name: Owntone server
-version: 28.10-shairport19
+version: 29.3-shairport20
 slug: owntone-server
 description: OwnTone is a Linux/FreeBSD DAAP (iTunes) media server with support for AirPlay devices, Apple Remote (and compatibles), MPD, Spotify, Chromecast, mp3 streaming and internet radio. It allows you to share your music collection over the local network.
 arch:
@@ -24,6 +24,8 @@ host_ipc: false
 environment:
   RUST_LOG: "warn,libmdns=error"
 ingress: true
+# The official owntone/owntone image uses BusyBox init + OpenRC (not s6-overlay).
+# Let the base image's /sbin/init manage services via OpenRC.
 init: false
 hassio_api: false
 auth_api: true
@@ -33,12 +35,12 @@ ingress_port: 3689
 webui: http://[HOST]:[PORT:3689]/
 startup: application
 boot: auto
-#image: linuxserver/daapd
 options: 
   general:
     admin_password: ''
     loglevel: log
     high_resolution_clock: true
+    start_buffer_ms: 2250
     trusted_networks:
       - 'localhost'
       - '192.168'
@@ -62,6 +64,7 @@ schema:
     admin_password: password?
     loglevel: str
     high_resolution_clock: bool?
+    start_buffer_ms: int(0,10000)?
     trusted_networks: [str]
   library:
     name: str

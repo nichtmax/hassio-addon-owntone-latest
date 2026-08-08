@@ -1,11 +1,11 @@
 # Home Assistant OwnTone Add-on (with AirPlay multiroom ingress)
 
-Run [OwnTone](https://owntone.github.io/owntone-server/) 28.10 — a DAAP (iTunes) media server with AirPlay, Chromecast, MPD and internet radio support — as a Home Assistant add-on. Based on [docker-daapd](https://github.com/linuxserver/docker-daapd).
+Run [OwnTone](https://owntone.github.io/owntone-server/) 29.3 — a DAAP (iTunes) media server with AirPlay, Chromecast, MPD and internet radio support — as a Home Assistant add-on. Based on the official [owntone/owntone](https://hub.docker.com/r/owntone/owntone) image.
 
-**What this fork adds** over [mynameisdaniel32/hassio-addon-owntone-latest](https://github.com/mynameisdaniel32/hassio-addon-owntone-latest):
+**What this fork adds:**
 
 - **Built-in shairport-sync AirPlay receiver.** AirPlay from your phone to the add-on ("Multiroom" by default); shairport-sync writes raw PCM into a pipe that OwnTone reads and redistributes to all enabled AirPlay outputs. Phone → every room, in sync.
-- **OwnTone 28.10** (upgraded from 28.6) with the config corruption bugs fixed.
+- **OwnTone 29.3** (via the official Docker image, replacing the deprecated linuxserver/daapd base).
 - **Host networking**, required for AirPlay/mDNS discovery of the receiver.
 
 ## Supported architectures

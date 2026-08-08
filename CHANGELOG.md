@@ -1,5 +1,35 @@
 # Changelog
 
+## 29.3-shairport20
+
+**Major: migrated to the official `owntone/owntone:latest` (29.3) base image.**
+
+Replaces the deprecated `linuxserver/daapd` base, its s6-overlay init, and the
+symlink-config chain that required constant self-healing workarounds. The
+official image is Alpine + OpenRC; the addon now uses OpenRC services for all
+lifecycle management.
+
+- **Base image**: `owntone/owntone:latest` (OwnTone 29.3, up from 28.10).
+- **Init system**: BusyBox `/sbin/init` + OpenRC (was s6-overlay). All
+  services — owntone, avahi-daemon, dbus, shairport-sync, and a new
+  `owntone-config` renderer — are managed via `/etc/init.d/` and the
+  `default` runlevel.
+- **Config path**: `/etc/owntone/owntone.conf` (was `/etc/owntone.conf`,
+  no more `.orig` symlink chain).
+- **Config rendering**: new `owntone-config` OpenRC service replaces the old
+  `90-homeassistant` cont-init.d script. Runs before owntone, renders config
+  from the upstream 29.3 template + add-on options, persists to `/share`.
+- **shairport-sync**: new `shairport-sync` OpenRC service replaces the s6
+  `svc-shairport` longrun. Same pipe-backend AirPlay ingress, same
+  ignore_volume_control + volume_max_db=0 behavior.
+- **User**: `owntone` (was `abc` — the linuxserver convention).
+- **Dropped**: avahi-dnsconfd dependency (it rewrote resolv.conf; replaced
+  with direct avahi-daemon dependency). No more spotify-section self-heal,
+  no more airplay_shared brace-fix awk (those were 28.10-specific bugs).
+- **New option**: `general.start_buffer_ms` (default 2250, range 0–10000) —
+  reduces AirPlay startup latency. Supported by OwnTone 29.x (was absent
+  from 28.10).
+
 ## 28.10-shairport19
 
 - New option `general.high_resolution_clock` (default: enabled, matching the

@@ -1,0 +1,86 @@
+#!/sbin/openrc-run
+# shellcheck shell=sh
+#
+# OpenRC service: shairport-sync AirPlay receiver.
+# Receives AirPlay from phones, writes raw PCM to a named pipe that OwnTone
+# watches (pipe_autostart) and redistributes to all enabled AirPlay outputs.
+#
+# Adapted from the old s6-overlay svc-shairport/run script.
+
+description="shairport-sync AirPlay receiver (phone -> pipe -> OwnTone)"
+
+PIPE=/share/owntone/music/AirPlay
+METADATA_PIPE=/share/owntone/music/AirPlay.metadata
+CONF=/tmp/shairport-sync.conf
+
+depend() {
+    after owntone
+}
+
+start_pre() {
+    # Ensure the audio pipe exists and is readable by the owntone user.
+    if [ ! -p "$PIPE" ]; then
+        rm -f "$PIPE"
+        mkfifo -m 666 "$PIPE"
+    fi
+    chown owntone:owntone "$PIPE" 2>/dev/null || true
+
+    # Read options from the add-on config.
+    NAME=$(jq -j --raw-output '.shairport.name // "Multiroom"' /data/options.json 2>/dev/null)
+    [ -z "$NAME" ] && NAME="Multiroom"
+    METADATA_ENABLED=$(jq -j --raw-output '.shairport.metadata_enabled // false' /data/options.json 2>/dev/null)
+
+    if [ "$METADATA_ENABLED" = "true" ]; then
+        if [ ! -p "$METADATA_PIPE" ]; then
+            rm -f "$METADATA_PIPE"
+            mkfifo -m 666 "$METADATA_PIPE"
+        fi
+        chown owntone:owntone "$METADATA_PIPE" 2>/dev/null || true
+        METADATA_BLOCK="metadata = {
+  enabled = \"yes\";
+  include_cover_art = \"yes\";
+  pipe_name = \"$METADATA_PIPE\";
+};"
+    else
+        METADATA_BLOCK=""
+        rm -f "$METADATA_PIPE"
+    fi
+
+    cat > "$CONF" <<CONFeOF
+general = {
+  name = "$NAME";
+  output_backend = "pipe";
+  // Ignore the AirPlay source's volume control: always pass audio through at
+  // full level (100%). Room volume is controlled per-output in OwnTone instead.
+  // volume_max_db pins the software attenuator's ceiling to 0 dB so the pipe
+  // backend (which has no hardware mixer and attenuates in software) cannot
+  // turn the source volume down.
+  ignore_volume_control = "yes";
+  volume_max_db = 0.0;
+};
+$METADATA_BLOCK
+pipe = {
+  name = "$PIPE";
+  output_rate = 44100;
+  output_format = "S16_LE";
+  output_channels = 2;
+};
+CONFeOF
+
+    ebegin "Starting shairport-sync (advertising as \"$NAME\", audio -> $PIPE)"
+}
+
+start() {
+    ebegin "Starting shairport-sync"
+    # Run in the foreground (OpenRC supervises via start-stop-daemon).
+    start-stop-daemon --start --background --make-pidfile \
+        --pidfile /run/shairport-sync.pid \
+        --exec /usr/bin/shairport-sync -- -c "$CONF"
+    eend $?
+}
+
+stop() {
+    ebegin "Stopping shairport-sync"
+    start-stop-daemon --stop --pidfile /run/shairport-sync.pid --exec /usr/bin/shairport-sync
+    eend $?
+}

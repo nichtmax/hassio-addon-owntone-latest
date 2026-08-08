@@ -37,7 +37,11 @@ general = {
   output_backend = "pipe";
   // Ignore the AirPlay source's volume control: always pass audio through at
   // full level (100%). Room volume is controlled per-output in OwnTone instead.
+  // volume_max_db pins the software attenuator's ceiling to 0 dB so the pipe
+  // backend (which has no hardware mixer and attenuates in software) cannot
+  // turn the source volume down. Both settings together guarantee full level.
   ignore_volume_control = "yes";
+  volume_max_db = 0.0;
 };
 metadata = {
   enabled = "yes";

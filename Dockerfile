@@ -10,7 +10,7 @@ ARG BUILD_ARCH
 #   Fall back to Alpine edge/community if the base image's repos don't carry it.
 # CACHEBUST forces Docker to re-run this layer (and the COPY below) instead of
 # serving a stale cached image that predates shairport-sync.
-ARG CACHEBUST=6
+ARG CACHEBUST=7
 RUN echo "cachebust: ${CACHEBUST}" \
     && apk add --no-cache jq \
     && (apk add --no-cache shairport-sync \

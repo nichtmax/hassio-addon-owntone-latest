@@ -21,6 +21,7 @@ jq -e '(.shairport // {}) | type == "object"' "$OPTIONS_PATH" >/dev/null || \
 if ! jq -e '
     ((.shairport // {}) | keys - [
       "name", "password", "metadata_enabled", "ignore_volume_control",
+      "allow_session_interruption", "session_timeout",
       "pipe_sample_rate", "pipe_sample_format"
     ]) == []
 ' "$OPTIONS_PATH" >/dev/null; then
@@ -47,13 +48,28 @@ case "$PIPE_FORMAT" in
     *) fail "shairport.pipe_sample_format must be S16_LE or S32_LE" ;;
 esac
 
-for field in metadata_enabled ignore_volume_control; do
+for field in metadata_enabled ignore_volume_control allow_session_interruption; do
     if jq -e --arg field "$field" \
         '(.shairport | has($field)) and (.shairport[$field] | type != "boolean")' \
         "$OPTIONS_PATH" >/dev/null; then
         fail "shairport.$field must be a boolean"
     fi
 done
+
+if jq -e '
+    (.shairport | has("session_timeout")) and
+    (((.shairport.session_timeout | type) != "number") or
+     ((.shairport.session_timeout | floor) != .shairport.session_timeout))
+' "$OPTIONS_PATH" >/dev/null; then
+    fail "shairport.session_timeout must be an integer of at least 60 seconds"
+fi
+
+SESSION_TIMEOUT=$(jq -r '.shairport.session_timeout // 60' "$OPTIONS_PATH")
+case "$SESSION_TIMEOUT" in
+    ''|*[!0-9]*) fail "shairport.session_timeout must be an integer of at least 60 seconds" ;;
+esac
+[ "$SESSION_TIMEOUT" -ge 60 ] || \
+    fail "shairport.session_timeout must be an integer of at least 60 seconds"
 
 mkdir -p "$(dirname "$OWNTONE_OUTPUT")" "$(dirname "$SHAIRPORT_OUTPUT")" "$PERSIST_DIR"
 OWNTONE_TMP="${OWNTONE_OUTPUT}.tmp"

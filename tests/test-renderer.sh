@@ -26,6 +26,12 @@ grep -F 'ignore_volume_control = "yes";' "$TMP/default/shairport.conf" >/dev/nul
 grep -F 'output_rate = 44100;' "$TMP/default/shairport.conf" >/dev/null
 grep -F 'output_format = "S16_LE";' "$TMP/default/shairport.conf" >/dev/null
 grep -F 'output_channels = 2;' "$TMP/default/shairport.conf" >/dev/null
+grep -F 'allow_session_interruption = "no";' "$TMP/default/shairport.conf" >/dev/null
+grep -F 'session_timeout = 60;' "$TMP/default/shairport.conf" >/dev/null
+grep -F 'statistics = "yes";' "$TMP/default/shairport.conf" >/dev/null
+grep -F 'log_verbosity = 0;' "$TMP/default/shairport.conf" >/dev/null
+grep -F 'log_show_time_since_startup = "yes";' "$TMP/default/shairport.conf" >/dev/null
+grep -F 'log_show_time_since_last_message = "yes";' "$TMP/default/shairport.conf" >/dev/null
 if grep -F 'metadata = {' "$TMP/default/shairport.conf" >/dev/null; then
     echo "metadata section rendered while disabled" >&2
     exit 1
@@ -46,7 +52,20 @@ grep -F 'pipe_bits_per_sample = 32' "$TMP/all/owntone.conf" >/dev/null
 grep -F 'ignore_volume_control = "no";' "$TMP/all/shairport.conf" >/dev/null
 grep -F 'metadata = {' "$TMP/all/shairport.conf" >/dev/null
 grep -F 'name = "Multiroom \"Test\"";' "$TMP/all/shairport.conf" >/dev/null
+grep -F 'allow_session_interruption = "yes";' "$TMP/all/shairport.conf" >/dev/null
+grep -F 'session_timeout = 120;' "$TMP/all/shairport.conf" >/dev/null
+grep -F 'log_verbosity = 2;' "$TMP/all/shairport.conf" >/dev/null
 grep -F 'airplay "Speaker \"One\"" {' "$TMP/all/owntone.conf" >/dev/null
+
+for mapping in fatal:0 log:0 warning:0 info:1 debug:2 spam:3; do
+    level=${mapping%:*}
+    verbosity=${mapping#*:}
+    jq --arg level "$level" '.general.loglevel=$level' \
+        "$TMP/default.json" > "$TMP/loglevel.json"
+    render "loglevel-$level" "$TMP/loglevel.json"
+    grep -F "log_verbosity = $verbosity;" \
+        "$TMP/loglevel-$level/shairport.conf" >/dev/null
+done
 
 for rate in 44100 48000 88200 96000; do
     for format in S16_LE S32_LE; do
@@ -98,11 +117,20 @@ for bad_format in S24_LE auto invalid; do
     fi
 done
 
-for bad_override in output_channels output_backend pipe_name; do
+for bad_override in output_channels output_backend pipe_name diagnostics sessioncontrol; do
     jq --arg field "$bad_override" '.shairport[$field]="unsupported"' \
         "$TMP/default.json" > "$TMP/bad.json"
     if render bad "$TMP/bad.json" 2>/dev/null; then
         echo "App-controlled Shairport option accepted: $bad_override" >&2
+        exit 1
+    fi
+done
+
+for bad_timeout in 0 1 59 60.5 '"invalid"' 'null'; do
+    jq --argjson timeout "$bad_timeout" '.shairport.session_timeout=$timeout' \
+        "$TMP/default.json" > "$TMP/bad.json"
+    if render bad "$TMP/bad.json" 2>/dev/null; then
+        echo "invalid session timeout accepted: $bad_timeout" >&2
         exit 1
     fi
 done
@@ -112,6 +140,15 @@ for malformed in 'null' '[]' '"yes"'; do
         "$TMP/default.json" > "$TMP/bad.json"
     if render bad "$TMP/bad.json" 2>/dev/null; then
         echo "malformed ignore_volume_control accepted: $malformed" >&2
+        exit 1
+    fi
+done
+
+for malformed in 'null' '[]' '"yes"'; do
+    jq --argjson value "$malformed" '.shairport.allow_session_interruption=$value' \
+        "$TMP/default.json" > "$TMP/bad.json"
+    if render bad "$TMP/bad.json" 2>/dev/null; then
+        echo "malformed allow_session_interruption accepted: $malformed" >&2
         exit 1
     fi
 done

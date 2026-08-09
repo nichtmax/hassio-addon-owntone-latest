@@ -68,5 +68,5 @@
   "mpd": {"enable_httpd_plugin": true},
   "sqlite": {"pragma_cache_size_library": 4000, "pragma_cache_size_cache": 3000, "pragma_journal_mode": "WAL", "pragma_synchronous": 1, "pragma_mmap_size_library": 1048576, "pragma_mmap_size_cache": 524288, "vacuum": false},
   "streaming": {"sample_rate": 48000, "bit_rate": 320},
-  "shairport": {"name": "Multiroom \"Test\"", "password": "receiver secret", "metadata_enabled": true, "ignore_volume_control": false, "pipe_sample_rate": 96000, "pipe_sample_format": "S32_LE"}
+  "shairport": {"name": "Multiroom \"Test\"", "password": "receiver secret", "metadata_enabled": true, "ignore_volume_control": false, "allow_session_interruption": true, "session_timeout": 120, "pipe_sample_rate": 96000, "pipe_sample_format": "S32_LE"}
 }

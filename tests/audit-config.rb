@@ -33,6 +33,8 @@ required_shairport = %w[
   shairport.password
   shairport.metadata_enabled
   shairport.ignore_volume_control
+  shairport.allow_session_interruption
+  shairport.session_timeout
   shairport.pipe_sample_rate
   shairport.pipe_sample_format
 ]

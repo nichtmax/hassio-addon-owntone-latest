@@ -1,5 +1,12 @@
 # Changelog
 
+## 29.3-shairport26
+
+- Added focused Shairport session controls for Classic AirPlay interruption and
+  abandoned-session timeout handling.
+- Enabled Shairport statistics and timing diagnostics, with verbosity derived
+  from the App-wide OwnTone log level.
+
 ## 29.3-shairport25
 
 - Build Shairport Sync 5.2.1 from its checksum-pinned release archive with only

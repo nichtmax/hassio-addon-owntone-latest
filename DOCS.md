@@ -38,6 +38,10 @@ The following options are supported:
 - `ignore_volume_control`: when enabled, Shairport does not attenuate PCM based
   on the source volume. Metadata volume messages can still change OwnTone's
   player volume when metadata forwarding is enabled.
+- `allow_session_interruption`: allows a new Classic AirPlay source to replace
+  the current session. AirPlay 2 manages interruption independently.
+- `session_timeout`: seconds without source audio before an abandoned session
+  is released; the minimum and default are 60 seconds.
 - `pipe_sample_rate`: 44100, 48000, 88200, or 96000 Hz.
 - `pipe_sample_format`: `S16_LE` or `S32_LE`.
 
@@ -53,9 +57,16 @@ shairport:
   password: ""
   metadata_enabled: false
   ignore_volume_control: true
+  allow_session_interruption: false
+  session_timeout: 60
   pipe_sample_rate: 44100
   pipe_sample_format: S16_LE
 ```
+
+Shairport diagnostics are always enabled. Statistics and elapsed-time markers
+are written to the App log, and diagnostic verbosity follows `general.loglevel`:
+`fatal`, `log`, and `warning` map to 0; `info` to 1; `debug` to 2; and `spam` to
+3. This keeps both daemons on one App-wide logging control.
 
 ## Volume behavior
 

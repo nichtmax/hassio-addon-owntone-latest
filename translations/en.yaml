@@ -150,5 +150,7 @@ configuration:
       password: {name: Receiver password, description: Optional password required to stream to this receiver.}
       metadata_enabled: {name: Forward metadata, description: Forward title, artist, artwork, and source-volume metadata. Source-volume metadata can change OwnTone's player volume.}
       ignore_volume_control: {name: Ignore source volume, description: Pass audio at full level instead of applying the source device's volume. This does not suppress volume messages forwarded through metadata.}
+      allow_session_interruption: {name: Allow session interruption, description: Let a new Classic AirPlay source interrupt the currently connected source. AirPlay 2 manages interruption independently.}
+      session_timeout: {name: Session timeout, description: Seconds without source audio before Shairport ends the abandoned session. Shairport requires at least 60 seconds.}
       pipe_sample_rate: {name: Pipe sample rate, description: PCM sample rate used by both Shairport Sync and OwnTone.}
       pipe_sample_format: {name: Pipe sample format, description: Signed little-endian PCM depth used by both Shairport Sync and OwnTone.}

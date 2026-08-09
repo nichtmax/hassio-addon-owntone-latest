@@ -1,5 +1,5 @@
 name: OwnTone server
-version: 29.3-shairport25
+version: 29.3-shairport26
 slug: owntone-server
 description: >-
   OwnTone music server with AirPlay, Chromecast, MPD, internet radio, and a
@@ -97,6 +97,8 @@ options:
     password: ""
     metadata_enabled: false
     ignore_volume_control: true
+    allow_session_interruption: false
+    session_timeout: 60
     pipe_sample_rate: 44100
     pipe_sample_format: S16_LE
 schema:
@@ -219,5 +221,7 @@ schema:
     password: password?
     metadata_enabled: bool
     ignore_volume_control: bool
+    allow_session_interruption: bool
+    session_timeout: int(60,)
     pipe_sample_rate: list(44100|48000|88200|96000)
     pipe_sample_format: list(S16_LE|S32_LE)

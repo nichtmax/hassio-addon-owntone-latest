@@ -28,7 +28,12 @@ start() {
     # /etc/owntone is created by the base image's own init script, but that
     # runs after this service — create it here so the config copy works.
     mkdir -p /etc/owntone
-    chown -R owntone:owntone "$SHARE_DIR" 2>/dev/null || true
+    # Force ownership + permissions: files may have been created by the old
+    # linuxserver-based container (user abc, UID 911) with restrictive modes
+    # (drwx------), which the new "owntone" user (UID 1000) cannot access.
+    chown -R owntone:owntone "$SHARE_DIR"
+    chmod 755 "$SHARE_DIR" "$SHARE_DIR/dbase_and_logs" "$SHARE_DIR/music"
+    chmod -R u+rwX,go+rX "$SHARE_DIR/dbase_and_logs" "$SHARE_DIR/music"
     eend 0
 
     ebegin "Rendering OwnTone config"

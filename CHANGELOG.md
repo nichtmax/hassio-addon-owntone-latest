@@ -1,5 +1,12 @@
 # Changelog
 
+## 29.3-shairport22
+
+- Fix permissions: force `chown owntone:owntone` + `chmod` on `/share/owntone`
+  at startup. Files created by the old linuxserver-based container (user abc,
+  UID 911, mode `drwx------`) were inaccessible to the new `owntone` user
+  (UID 1000), causing `Could not open database` FATAL on first 29.3 boot.
+
 ## 29.3-shairport21
 
 - Fix startup: create `/etc/owntone/` before copying the config (the base

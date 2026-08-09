@@ -24,6 +24,10 @@ depend() {
 
 start() {
     ebegin "Preparing OwnTone directories"
+    # The owntone user is created by the base image's owntone init script, but
+    # that runs AFTER this service (we run "before owntone"). Create it here
+    # too — adduser -D is idempotent (fails silently if the user exists).
+    adduser -D -g owntone -h /dev/null -s /sbin/nologin owntone 2>/dev/null || true
     mkdir -p "$SHARE_DIR" "$SHARE_DIR/dbase_and_logs" "$SHARE_DIR/music"
     # /etc/owntone is created by the base image's own init script, but that
     # runs after this service — create it here so the config copy works.

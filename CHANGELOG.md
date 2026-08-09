@@ -1,5 +1,11 @@
 # Changelog
 
+## 29.3-shairport23
+
+- Fix `chown: unknown user/group owntone:owntone`: the base image creates the
+  `owntone` user in its own init script's `start_pre`, which runs AFTER the
+  config service. Create the user in the config service too (idempotent).
+
 ## 29.3-shairport22
 
 - Fix permissions: force `chown owntone:owntone` + `chmod` on `/share/owntone`

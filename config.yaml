@@ -1,0 +1,223 @@
+name: OwnTone server
+version: 29.3-shairport25
+slug: owntone-server
+description: >-
+  OwnTone music server with AirPlay, Chromecast, MPD, internet radio, and a
+  focused Shairport Sync receiver that feeds OwnTone through a PCM pipe.
+url: https://github.com/nichtmax/hassio-addon-owntone-latest
+arch:
+  - aarch64
+  - amd64
+map:
+  - type: share
+    read_only: false
+host_network: true
+host_dbus: false
+host_ipc: false
+apparmor: true
+environment:
+  RUST_LOG: warn,libmdns=error
+ingress: true
+ingress_port: 3689
+ingress_stream: true
+panel_icon: mdi:music-circle
+init: false
+audio: true
+webui: http://[HOST]:[PORT:3689]/
+watchdog: http://[HOST]:3689/api/player
+startup: application
+boot: auto
+backup: cold
+options:
+  general:
+    admin_password: ""
+    loglevel: log
+    trusted_networks:
+      - localhost
+      - "192.168"
+      - "172.17"
+      - "172.30"
+      - "10."
+    ipv6: false
+    high_resolution_clock: true
+    start_buffer_ms: 2250
+  library:
+    name: Hassio music
+    password: ""
+    follow_symlinks: true
+    podcasts:
+      - /Podcasts
+    audiobooks:
+      - /Audiobooks
+    compilations:
+      - /Compilations
+    compilation_artist: Various Artists
+    artwork_basenames:
+      - artwork
+      - cover
+      - Folder
+    filetypes_ignore:
+      - .db
+      - .ini
+      - .db-journal
+      - .pdf
+      - .metadata
+    filepath_ignore: []
+    no_decode: []
+    force_decode: []
+    decode_audio_filters: []
+    m3u_overrides: false
+    itunes_overrides: false
+    itunes_smartpl: false
+  audio:
+    nickname: Computer
+    type: dummy
+  alsa: []
+  fifo: {}
+  airplay_shared:
+    uncompressed_alac: false
+  airplay: []
+  chromecast: []
+  spotify:
+    bitrate: 0
+    base_playlist_disable: false
+    artist_override: false
+    album_override: false
+    initscan_disable: false
+  rcp: []
+  mpd:
+    enable_httpd_plugin: false
+  sqlite:
+    vacuum: true
+  streaming:
+    sample_rate: 44100
+    bit_rate: 192
+  shairport:
+    name: Multiroom
+    password: ""
+    metadata_enabled: false
+    ignore_volume_control: true
+    pipe_sample_rate: 44100
+    pipe_sample_format: S16_LE
+schema:
+  general:
+    admin_password: password?
+    loglevel: list(fatal|log|warning|info|debug|spam)
+    trusted_networks:
+      - str
+    ipv6: bool?
+    cache_daap_threshold: int(0,)?
+    speaker_autoselect: bool?
+    high_resolution_clock: bool?
+    start_buffer_ms: int(0,10000)?
+  library:
+    name: str
+    password: password?
+    follow_symlinks: bool?
+    podcasts:
+      - str
+    audiobooks:
+      - str
+    compilations:
+      - str
+    compilation_artist: str?
+    hide_singles: bool?
+    radio_playlists: bool?
+    name_library: str?
+    name_music: str?
+    name_movies: str?
+    name_tvshows: str?
+    name_podcasts: str?
+    name_audiobooks: str?
+    name_radio: str?
+    name_chapter: str?
+    artwork_basenames:
+      - str
+    artwork_individual: bool?
+    filetypes_ignore:
+      - str
+    filepath_ignore:
+      - str
+    filescan_disable: bool?
+    only_first_genre: bool?
+    m3u_overrides: bool?
+    itunes_overrides: bool?
+    itunes_smartpl: bool?
+    no_decode:
+      - str
+    force_decode:
+      - str
+    prefer_format: list(wav|alac|mpeg)?
+    decode_audio_filters:
+      - str
+    rating_updates: bool?
+    read_rating: bool?
+    write_rating: bool?
+    max_rating: int(1,100)?
+    allow_modifying_stored_playlists: bool?
+    default_playlist_directory: str?
+    clear_queue_on_stop_disable: bool?
+  audio:
+    nickname: str?
+    type: list(alsa|pulseaudio|dummy|disabled)?
+    server: str?
+    card: str?
+    mixer: str?
+    mixer_device: str?
+    sync_disable: bool?
+    adjust_period_seconds: int(1,)?
+  alsa:
+    - name: str
+      nickname: str?
+      mixer: str?
+      mixer_device: str?
+  fifo:
+    nickname: str?
+    path: str?
+  airplay_shared:
+    uncompressed_alac: bool?
+  airplay:
+    - name: str
+      max_volume: int(0,11)?
+      exclude: bool?
+      permanent: bool?
+      reconnect: bool?
+      password: password?
+      airplay2_disable: bool?
+      raop_disable: bool?
+      nickname: str?
+  chromecast:
+    - name: str
+      max_volume: int(0,11)?
+      exclude: bool?
+      nickname: str?
+  spotify:
+    bitrate: int(0,3)?
+    base_playlist_disable: bool?
+    artist_override: bool?
+    album_override: bool?
+    initscan_disable: bool?
+  rcp:
+    - name: str
+      exclude: bool?
+      clear_on_close: bool?
+  mpd:
+    enable_httpd_plugin: bool?
+  sqlite:
+    pragma_cache_size_library: int?
+    pragma_cache_size_cache: int?
+    pragma_journal_mode: list(DELETE|TRUNCATE|PERSIST|MEMORY|WAL|OFF)?
+    pragma_synchronous: int(0,2)?
+    pragma_mmap_size_library: int(0,)?
+    pragma_mmap_size_cache: int(0,)?
+    vacuum: bool?
+  streaming:
+    sample_rate: int(8000,192000)?
+    bit_rate: list(64|96|128|192|320)?
+  shairport:
+    name: str
+    password: password?
+    metadata_enabled: bool
+    ignore_volume_control: bool
+    pipe_sample_rate: list(44100|48000|88200|96000)
+    pipe_sample_format: list(S16_LE|S32_LE)

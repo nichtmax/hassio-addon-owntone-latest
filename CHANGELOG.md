@@ -1,5 +1,27 @@
 # Changelog
 
+## 29.3-shairport25
+
+- Build Shairport Sync 5.2.1 from its checksum-pinned release archive with only
+  the classic AirPlay, Avahi, OpenSSL, FFmpeg, pipe, and metadata-pipe features
+  needed by the OwnTone ingress bridge.
+- Remove the older Alpine Shairport Sync package and its unused audio backends.
+
+## 29.3-shairport24
+
+- Refactor configuration around Home Assistant's current App schema and
+  translation conventions; rename `config.yml` to `config.yaml`.
+- Expose all user-facing OwnTone template settings with typed configuration and
+  English descriptions while keeping paths and ports App-managed.
+- Replace persisted-template overlays and `sed` mutations with deterministic,
+  safely escaped OwnTone and Shairport renderers.
+- Add Shairport receiver password, source-volume handling, and coupled PCM
+  sample-rate/format options. Stereo output and pipe paths remain fixed.
+- Pin OwnTone 29.3 and Alpine 3.23's Shairport Sync 4.3.7-r1.
+- Add schema/translation/catalog audits and comprehensive renderer fixtures.
+- Use the current `repository.yaml`, App metadata, web UI port placeholder,
+  least-privilege API settings, share mapping, watchdog, and AppArmor defaults.
+
 ## 29.3-shairport23
 
 - Fix `chown: unknown user/group owntone:owntone`: the base image creates the

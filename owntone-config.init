@@ -1,21 +1,14 @@
 #!/sbin/openrc-run
 # shellcheck shell=sh
 #
-# OpenRC service: render /etc/owntone/owntone.conf from add-on options before
-# the owntone service starts.
-#
-# Replaces the old 90-homeassistant cont-init.d script (s6-overlay). Adapted
-# for the official owntone/owntone image: config path is /etc/owntone/owntone.conf
-# (not /etc/owntone.conf), template is /usr/share/doc/owntone/examples/owntone.conf,
-# user is "owntone" (not "abc").
+# OpenRC service: prepare persistent storage and render both daemon configs.
 
+# OpenRC consumes this variable.
+# shellcheck disable=SC2034
 description="Render OwnTone config from add-on options"
 
-OPTIONS_PATH=/data/options.json
 CONFIG_PATH=/etc/owntone/owntone.conf
-TEMPLATE_PATH=/usr/share/doc/owntone/examples/owntone.conf
 SHARE_DIR=/share/owntone
-PERSIST_CONFIG=/share/owntone/dbase_and_logs/owntone.conf
 
 depend() {
     after modules
@@ -24,163 +17,22 @@ depend() {
 
 start() {
     ebegin "Preparing OwnTone directories"
-    # The owntone user is created by the base image's owntone init script, but
-    # that runs AFTER this service (we run "before owntone"). Create it here
-    # too — adduser -D is idempotent (fails silently if the user exists).
     adduser -D -g owntone -h /dev/null -s /sbin/nologin owntone 2>/dev/null || true
     mkdir -p "$SHARE_DIR" "$SHARE_DIR/dbase_and_logs" "$SHARE_DIR/music"
-    # /etc/owntone is created by the base image's own init script, but that
-    # runs after this service — create it here so the config copy works.
     mkdir -p /etc/owntone
-    # Force ownership + permissions: files may have been created by the old
-    # linuxserver-based container (user abc, UID 911) with restrictive modes
-    # (drwx------), which the new "owntone" user (UID 1000) cannot access.
-    chown -R owntone:owntone "$SHARE_DIR"
+    chown owntone:owntone "$SHARE_DIR" "$SHARE_DIR/dbase_and_logs" "$SHARE_DIR/music"
     chmod 755 "$SHARE_DIR" "$SHARE_DIR/dbase_and_logs" "$SHARE_DIR/music"
-    chmod -R u+rwX,go+rX "$SHARE_DIR/dbase_and_logs" "$SHARE_DIR/music"
     eend 0
 
     ebegin "Rendering OwnTone config"
 
-    # Start from the upstream template, then overlay the persisted config if it
-    # exists (so manual edits survive container restarts).
-    cp "$TEMPLATE_PATH" "$CONFIG_PATH"
-    # Only overlay a persisted config from the same major version — a 28.x
-    # persisted config has songs3.db paths and lacks 29.x options, which would
-    # break startup. Detect by the db filename: 29.x uses database.db.
-    if [ -f "$PERSIST_CONFIG" ] && grep -q 'database\.db' "$PERSIST_CONFIG"; then
-        cp "$PERSIST_CONFIG" "$CONFIG_PATH"
+    if ! /usr/local/bin/render-owntone-config; then
+        eend 1
+        return 1
     fi
-
-    # --- Path rewrites (always enforced, so they survive persisted overlays) ---
-    # Library, db, log, and cache go to /share/owntone for persistence.
-    sed -i 's#/srv/media#/share/owntone/music#g' "$CONFIG_PATH"
-    sed -i 's#/var/cache/owntone/database\.db#/share/owntone/dbase_and_logs/songs3.db#g' "$CONFIG_PATH"
-    sed -i 's#/var/cache/owntone/database\.bak#/share/owntone/dbase_and_logs/songs3.bak#g' "$CONFIG_PATH"
-    sed -i "s|^#\?[[:space:]]*cache_dir = .*|     cache_dir = \"/share/owntone/dbase_and_logs\"|" "$CONFIG_PATH"
-    sed -i "s|^#\?[[:space:]]*logfile = .*|     logfile = \"/share/owntone/dbase_and_logs/owntone.log\"|" "$CONFIG_PATH"
-
-    # Uncomment + set the audio backend to dummy (no local ALSA/PulseAudio in
-    # this addon; audio goes out via AirPlay only).
-    sed -i "/^#\?audio {$/,/^#\?}$/{s|^#\?[[:space:]]*type = .*|\ttype = \"dummy\"|}" "$CONFIG_PATH"
-
-    # Uncomment websocket_port, trusted_networks, pipe_autostart.
-    sed -i "/websocket_port/s/^#\?//" "$CONFIG_PATH"
-    sed -i "/trusted_networks/s/^#\?//" "$CONFIG_PATH"
-    sed -i "/pipe_autostart/s/^#\?//" "$CONFIG_PATH"
-
-    # IPv6 off (silences fe80:: mDNS noise on an IPv4-centric LAN).
-    sed -i "s|^#\?[[:space:]]*ipv6 = .*|\tipv6 = no|" "$CONFIG_PATH"
-
-    # --- Options from /data/options.json ---
-
-    # admin_password
-    VAL=$(jq -j --raw-output '.general.admin_password // empty' "$OPTIONS_PATH")
-    if [ -n "$VAL" ]; then
-        sed -i -e "/^#\?general {$/,/^#\?}$/{s|^#\?[[:space:]]*admin_password = .*|\tadmin_password = \"$VAL\"|}" "$CONFIG_PATH"
-    fi
-
-    # trusted_networks
-    VAL=$(jq -j --raw-output '.general.trusted_networks // empty | join("\",\"")' "$OPTIONS_PATH")
-    if [ -n "$VAL" ]; then
-        sed -i -e "/^#\?general {$/,/^#\?}$/{s|^#\?[[:space:]]*trusted_networks = .*|\ttrusted_networks = { \"$VAL\" }|}" "$CONFIG_PATH"
-    fi
-
-    # loglevel
-    VAL=$(jq -j --raw-output '.general.loglevel // empty' "$OPTIONS_PATH")
-    if [ -n "$VAL" ]; then
-        sed -i -e "/^#\?general {$/,/^#\?}$/{s|^#\?[[:space:]]*loglevel = .*|\tloglevel = \"$VAL\"|}" "$CONFIG_PATH"
-    fi
-
-    # high_resolution_clock (both directions enforced)
-    VAL=$(jq -j --raw-output '.general.high_resolution_clock // empty' "$OPTIONS_PATH")
-    if [ "$VAL" = "false" ]; then
-        sed -i -e "/^#\?general {$/,/^#\?}$/{s|^#\?[[:space:]]*high_resolution_clock = .*|\thigh_resolution_clock = no|}" "$CONFIG_PATH"
-    elif [ "$VAL" = "true" ]; then
-        sed -i -e "/^#\?general {$/,/^#\?}$/{s|^#\?[[:space:]]*high_resolution_clock = .*|\thigh_resolution_clock = yes|}" "$CONFIG_PATH"
-    fi
-
-    # start_buffer_ms (new in 29.x — reduces AirPlay startup latency from the
-    # 2250ms default to as low as 500ms, perceived as "instant").
-    VAL=$(jq -j --raw-output '.general.start_buffer_ms // empty' "$OPTIONS_PATH")
-    if [ -n "$VAL" ]; then
-        sed -i -e "/^#\?general {$/,/^#\?}$/{s|^#\?[[:space:]]*start_buffer_ms = .*|\tstart_buffer_ms = $VAL|}" "$CONFIG_PATH"
-    fi
-
-    # Library options
-    LIB_LEN=$(jq -j --raw-output '.library? | length' "$OPTIONS_PATH")
-    if [ -n "$LIB_LEN" ] && [ "$LIB_LEN" -ge 1 ]; then
-        VAL=$(jq -j --raw-output '.library.name // empty' "$OPTIONS_PATH")
-        if [ -n "$VAL" ]; then
-            sed -i -e "/^#\?library {$/,/^#\?}$/{s|^#\?[[:space:]]*name = .*|\tname = \"$VAL\"|}" "$CONFIG_PATH"
-        fi
-        VAL=$(jq -j --raw-output '.library.password // empty' "$OPTIONS_PATH")
-        if [ -n "$VAL" ]; then
-            sed -i -e "/^#\?library {$/,/^#\?}$/{s|^#\?[[:space:]]*password = .*|\tpassword = \"$VAL\"|}" "$CONFIG_PATH"
-        fi
-        VAL=$(jq -j --raw-output '.library.m3u_overrides // empty' "$OPTIONS_PATH")
-        if [ -n "$VAL" ]; then
-            sed -i -e "/^#\?library {$/,/^#\?}$/{s|^#\?[[:space:]]*m3u_overrides = .*|\tm3u_overrides = $VAL|}" "$CONFIG_PATH"
-        fi
-        VAL=$(jq -j --raw-output '.library.itunes_overrides // empty' "$OPTIONS_PATH")
-        if [ -n "$VAL" ]; then
-            sed -i -e "/^#\?library {$/,/^#\?}$/{s|^#\?[[:space:]]*itunes_overrides = .*|\titunes_overrides = $VAL|}" "$CONFIG_PATH"
-        fi
-        VAL=$(jq -j --raw-output '.library.itunes_smartpl // empty' "$OPTIONS_PATH")
-        if [ -n "$VAL" ]; then
-            sed -i -e "/^#\?library {$/,/^#\?}$/{s|^#\?[[:space:]]*itunes_smartpl = .*|\titunes_smartpl = $VAL|}" "$CONFIG_PATH"
-        fi
-    fi
-
-    # Chromecast devices
-    CC_LEN=$(jq -j --raw-output '.chromecast[]? | length' "$OPTIONS_PATH")
-    if [ -n "$CC_LEN" ] && [ "$CC_LEN" -ge 1 ]; then
-        sed -i -e '/^#\?chromecast "[^"]*".*$/,/^#\?}$/d' "$CONFIG_PATH"
-        for k in $(jq '.chromecast | keys | .[]' "$OPTIONS_PATH"); do
-            NAME=$(jq -j --raw-output ".chromecast[$k].name // empty" "$OPTIONS_PATH")
-            [ -z "$NAME" ] && continue
-            MAX_VOL=$(jq -j --raw-output ".chromecast[$k].max_volume // empty" "$OPTIONS_PATH")
-            NICK=$(jq -j --raw-output ".chromecast[$k].nickname // empty" "$OPTIONS_PATH")
-            EXCL=$(jq -j --raw-output ".chromecast[$k].exclude // empty" "$OPTIONS_PATH")
-            {
-                echo "chromecast \"$NAME\" {"
-                [ -n "$NICK" ] && echo "    nickname = \"$NICK\""
-                [ "$EXCL" = "true" ] && echo "    exclude = true" || echo "    exclude = false"
-                [ -n "$MAX_VOL" ] && [ "$MAX_VOL" -ge 0 ] && echo "    max_volume = $MAX_VOL"
-                echo "}"
-            } >> "$CONFIG_PATH"
-        done
-    fi
-
-    # AirPlay devices
-    AP_LEN=$(jq -j --raw-output '.airplay[]? | length' "$OPTIONS_PATH")
-    if [ -n "$AP_LEN" ] && [ "$AP_LEN" -ge 1 ]; then
-        sed -i -e '/^#\?airplay "[^"]*".*$/,/^#\?}$/d' "$CONFIG_PATH"
-        for k in $(jq '.airplay | keys | .[]' "$OPTIONS_PATH"); do
-            NAME=$(jq -j --raw-output ".airplay[$k].name // empty" "$OPTIONS_PATH")
-            [ -z "$NAME" ] && continue
-            MAX_VOL=$(jq -j --raw-output ".airplay[$k].max_volume // empty" "$OPTIONS_PATH")
-            PERM=$(jq -j --raw-output ".airplay[$k].permanent // empty" "$OPTIONS_PATH")
-            RAOP=$(jq -j --raw-output ".airplay[$k].raop_disable // empty" "$OPTIONS_PATH")
-            NICK=$(jq -j --raw-output ".airplay[$k].nickname // empty" "$OPTIONS_PATH")
-            PASS=$(jq -j --raw-output ".airplay[$k].password // empty" "$OPTIONS_PATH")
-            EXCL=$(jq -j --raw-output ".airplay[$k].exclude // empty" "$OPTIONS_PATH")
-            {
-                echo "airplay \"$NAME\" {"
-                [ "$PERM" = "true" ] && echo "    permanent = true" || echo "    permanent = false"
-                [ -n "$NICK" ] && echo "    nickname = \"$NICK\""
-                [ "$EXCL" = "true" ] && echo "    exclude = true" || echo "    exclude = false"
-                [ -n "$PASS" ] && echo "    password = \"$PASS\""
-                [ "$RAOP" = "true" ] && echo "    raop_disable = true" || echo "    raop_disable = false"
-                [ -n "$MAX_VOL" ] && [ "$MAX_VOL" -ge 0 ] && echo "    max_volume = $MAX_VOL"
-                echo "}"
-            } >> "$CONFIG_PATH"
-        done
-    fi
-
-    # Persist the rendered config so manual edits survive restarts.
-    cp "$CONFIG_PATH" "$PERSIST_CONFIG"
-    chown owntone:owntone "$PERSIST_CONFIG" "$CONFIG_PATH" 2>/dev/null || true
+    chown owntone:owntone "$CONFIG_PATH" /etc/shairport-sync.conf \
+        "$SHARE_DIR/dbase_and_logs/owntone.conf" \
+        "$SHARE_DIR/dbase_and_logs/shairport-sync.conf" 2>/dev/null || true
 
     eend 0
 }

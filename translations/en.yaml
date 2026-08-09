@@ -1,90 +1,154 @@
 configuration:
   general:
     name: General
-    description: Core OwnTone server settings.
+    description: Core OwnTone server behavior. Storage paths and ports are managed by the App.
     fields:
-      admin_password:
-        name: Admin password
-        description: Admin password for the web interface. Access from computers in "trusted networks" (see below) does not require a password.
-      loglevel:
-        name: Log level
-        description: "Log level. Available levels: fatal, log, warning, info, debug, spam."
-      high_resolution_clock:
-        name: High-resolution clock
-        description: "Use the high-resolution clock for playback timing (default: enabled). Try disabling only on unusual platforms if you experience audio drop-outs."
-      start_buffer_ms:
-        name: Start buffer (ms)
-        description: "AirPlay startup latency in milliseconds. Default 2250 (hardcoded by old AirPlay devices). Most modern listeners perceive 500ms as starting 'instantly'. Lower values reduce the delay between selecting a station and hearing audio."
-      trusted_networks:
-        name: Trusted networks
-        description: Who is allowed to connect without authorisation. Applies to Remotes, DAAP clients (iTunes) and the web interface. Options are "any", "localhost" or the prefix of one or more IPv4/6 networks.
+      admin_password: {name: Admin password, description: Password for the web interface. Trusted networks can connect without it.}
+      loglevel: {name: Log level, description: Amount of detail written to the OwnTone log.}
+      trusted_networks: {name: Trusted networks, description: Networks or keywords such as lan and localhost that may connect without authorization.}
+      ipv6: {name: IPv6, description: Enable IPv6 listeners and discovery.}
+      cache_daap_threshold: {name: DAAP cache threshold, description: Cache DAAP replies taking longer than this many milliseconds. Zero disables caching.}
+      speaker_autoselect: {name: Auto-select speaker, description: Select an available output automatically when playback starts with no selected speaker.}
+      high_resolution_clock: {name: High-resolution clock, description: Use the high-resolution playback clock. Disable only when diagnosing drop-outs on unusual hardware.}
+      start_buffer_ms: {name: Start buffer, description: Milliseconds buffered before output starts. Lower values reduce latency but can cause drop-outs.}
   library:
     name: Library
-    description: Music library settings.
+    description: Indexing, metadata, playlists, transcoding, ratings, and display names.
     fields:
-      name:
-        name: Library name
-        description: Name of the library as displayed by the clients (%h = hostname). If you change the name after pairing with Remote you may have to re-pair.
-      password:
-        name: Library password
-        description: Password for the library.
-      m3u_overrides:
-        name: m3u overrides
-        description: Should metadata from m3u playlists, e.g. artist and title in EXTINF, override the metadata from radio streams?
-      itunes_overrides:
-        name: iTunes overrides
-        description: Should iTunes metadata override ours?
-      itunes_smartpl:
-        name: iTunes smart playlists
-        description: Should we import the content of iTunes smart playlists?
+      name: {name: Library name, description: Name shown to clients. Percent-h expands to the hostname.}
+      password: {name: Library password, description: Optional password required by DAAP clients.}
+      follow_symlinks: {name: Follow symlinks, description: Follow symbolic links while scanning the library.}
+      podcasts: {name: Podcast directories, description: Paths relative to indexed roots whose items should be classified as podcasts.}
+      audiobooks: {name: Audiobook directories, description: Paths relative to indexed roots whose items should be classified as audiobooks.}
+      compilations: {name: Compilation directories, description: Paths relative to indexed roots whose items should be treated as compilations.}
+      compilation_artist: {name: Compilation artist, description: Album artist used for compilations without an album artist.}
+      hide_singles: {name: Hide single-track artists, description: Hide artists and albums represented by only one track in supported clients.}
+      radio_playlists: {name: Show radio playlists, description: Also expose internet-stream playlists as ordinary DAAP playlists.}
+      name_library: {name: Library label, description: Display label used for the main library.}
+      name_music: {name: Music label, description: Display label used for music.}
+      name_movies: {name: Movies label, description: Display label used for movies.}
+      name_tvshows: {name: TV shows label, description: Display label used for TV shows.}
+      name_podcasts: {name: Podcasts label, description: Display label used for podcasts.}
+      name_audiobooks: {name: Audiobooks label, description: Display label used for audiobooks.}
+      name_radio: {name: Radio label, description: Display label used for radio.}
+      name_chapter: {name: Chapter label, description: Display label used for chapters.}
+      artwork_basenames: {name: Artwork basenames, description: Basenames OwnTone checks for adjacent JPG or PNG artwork.}
+      artwork_individual: {name: Individual artwork, description: Search for artwork per media file instead of only per album. This increases cache use.}
+      filetypes_ignore: {name: Ignored file types, description: File suffixes the scanner should skip without probing.}
+      filepath_ignore: {name: Ignored path patterns, description: POSIX regular expressions for paths the scanner should ignore.}
+      filescan_disable: {name: Disable startup scan, description: Skip the initial scan. Use only when the library cannot change while OwnTone is stopped.}
+      only_first_genre: {name: First genre only, description: Use only the first semicolon-separated genre found in metadata.}
+      m3u_overrides: {name: M3U metadata overrides, description: Prefer EXTINF artist and title values over radio-stream metadata.}
+      itunes_overrides: {name: iTunes metadata overrides, description: Prefer imported iTunes metadata over OwnTone metadata.}
+      itunes_smartpl: {name: Import iTunes smart playlists, description: Import the contents of iTunes smart playlists.}
+      no_decode: {name: Never transcode formats, description: Media format codes that DAAP and RSP clients should receive unchanged.}
+      force_decode: {name: Always transcode formats, description: Media format codes that should always be transcoded for DAAP and RSP clients.}
+      prefer_format: {name: Preferred transcode format, description: Preferred DAAP and RSP transcode output format.}
+      decode_audio_filters: {name: Decode audio filters, description: FFmpeg audio filters applied while decoding library media.}
+      rating_updates: {name: Automatic rating updates, description: Update ratings automatically from play and skip counts.}
+      read_rating: {name: Read file ratings, description: Read ratings from media-file metadata.}
+      write_rating: {name: Write file ratings, description: Write manual rating changes back to media files. Requires write access.}
+      max_rating: {name: Maximum rating, description: Scale maximum used when reading and writing file ratings.}
+      allow_modifying_stored_playlists: {name: Modify stored playlists, description: Allow supported clients to create, edit, and delete M3U playlists.}
+      default_playlist_directory: {name: Default playlist directory, description: Directory within the library used when a new playlist has no explicit path.}
+      clear_queue_on_stop_disable: {name: Keep queue on stop, description: Preserve the play queue when playback stops instead of clearing it.}
+  audio:
+    name: Local audio
+    description: Default local audio output. The dummy backend keeps local playback disabled while network outputs remain available.
+    fields:
+      nickname: {name: Output nickname, description: Name shown in OwnTone's speaker list.}
+      type: {name: Output backend, description: Local output backend. Select dummy or disabled when using network speakers only.}
+      server: {name: PulseAudio server, description: Optional PulseAudio server hostname, IP address, or socket URI.}
+      card: {name: ALSA card, description: ALSA PCM device used for local output.}
+      mixer: {name: ALSA mixer, description: ALSA mixer channel used for volume control.}
+      mixer_device: {name: ALSA mixer device, description: ALSA device containing the selected mixer channel.}
+      sync_disable: {name: Disable resampling sync, description: Disable drift correction for local audio synchronization.}
+      adjust_period_seconds: {name: Adjustment period, description: Seconds of measurements used to estimate local-output drift and latency.}
+  alsa:
+    name: ALSA device overrides
+    description: Per-card overrides for local ALSA outputs.
+    fields:
+      name: {name: Card name, description: Exact ALSA card name used in the configuration section header.}
+      nickname: {name: Nickname, description: Name shown in OwnTone's speaker list.}
+      mixer: {name: Mixer, description: Mixer channel used for this card.}
+      mixer_device: {name: Mixer device, description: Device containing this card's mixer channel.}
+  fifo:
+    name: FIFO output
+    description: Optional OwnTone output that writes playback audio to a named pipe.
+    fields:
+      nickname: {name: Nickname, description: Name shown in OwnTone's speaker list.}
+      path: {name: FIFO path, description: Absolute path of the FIFO receiving OwnTone output audio.}
+  airplay_shared:
+    name: Shared AirPlay settings
+    description: Settings applied to every AirPlay output. Connection ports are fixed by the App.
+    fields:
+      uncompressed_alac: {name: Uncompressed ALAC, description: Reduce CPU use by sending uncompressed ALAC at the cost of additional network bandwidth.}
   airplay:
     name: AirPlay devices
-    description: Per-device AirPlay settings. Make sure you get the capitalization of the device name right.
+    description: Per-device AirPlay output overrides. Device names are case-sensitive.
     fields:
-      name:
-        name: Device name
-        description: Exact name of the AirPlay device (capitalization matters).
-      max_volume:
-        name: Max volume
-        description: OwnTone's volume goes to 11! If that's more than you can handle you can set a lower value here.
-      permanent:
-        name: Permanent
-        description: Keep this AirPlay device in the speaker list and ignore mDNS notifications about it no longer being present. The speaker remains until restart of OwnTone.
-      exclude:
-        name: Exclude
-        description: Exclude this AirPlay device from the speaker list.
-      password:
-        name: Password
-        description: AirPlay password.
-      raop_disable:
-        name: Disable RAOP
-        description: Disable AirPlay 1 (RAOP) for this device.
-      nickname:
-        name: Nickname
-        description: Name used in the speaker list, overrides the name from the device.
+      name: {name: Device name, description: Exact advertised AirPlay device name.}
+      max_volume: {name: Maximum volume, description: Maximum OwnTone volume for this output, from 0 through 11.}
+      exclude: {name: Exclude, description: Hide this device from the speaker list.}
+      permanent: {name: Permanent, description: Keep this device listed when mDNS reports that it is unavailable.}
+      reconnect: {name: Reconnect, description: Override OwnTone's automatic reconnect decision for this device.}
+      password: {name: Password, description: AirPlay password for this device.}
+      airplay2_disable: {name: Disable AirPlay 2, description: Force AirPlay 1 or RAOP when the device supports it.}
+      raop_disable: {name: Legacy AirPlay mode option, description: Compatibility alias from older App versions. Use Disable AirPlay 2 for new configurations.}
+      nickname: {name: Nickname, description: Speaker-list name overriding the advertised device name.}
   chromecast:
     name: Chromecast devices
-    description: Per-device Chromecast settings. Make sure you get the capitalization of the device name right.
+    description: Per-device Chromecast output overrides. Device names are case-sensitive.
     fields:
-      name:
-        name: Device name
-        description: Exact name of the Chromecast device (capitalization matters).
-      max_volume:
-        name: Max volume
-        description: OwnTone's volume goes to 11! If that's more than you can handle you can set a lower value here.
-      exclude:
-        name: Exclude
-        description: Exclude this device from the speaker list.
-      nickname:
-        name: Nickname
-        description: Name used in the speaker list, overrides the name from the device.
+      name: {name: Device name, description: Exact advertised Chromecast device name.}
+      max_volume: {name: Maximum volume, description: Maximum OwnTone volume for this output, from 0 through 11.}
+      exclude: {name: Exclude, description: Hide this device from the speaker list.}
+      nickname: {name: Nickname, description: Speaker-list name overriding the advertised device name.}
+  spotify:
+    name: Spotify
+    description: Spotify library and browsing behavior.
+    fields:
+      bitrate: {name: Preferred bitrate, description: Zero for no preference; 1, 2, and 3 select 96, 160, and 320 kbps.}
+      base_playlist_disable: {name: Disable Spotify folder, description: Place Spotify playlists with other playlists instead of in a Spotify folder.}
+      artist_override: {name: Override artists, description: Use the compilation artist as album artist for Spotify playlist items.}
+      album_override: {name: Override albums, description: Use the playlist name as album name for Spotify playlist items.}
+      initscan_disable: {name: Disable startup scan, description: Skip the Spotify library scan during startup. Manual rescans remain available.}
+  rcp:
+    name: Roku SoundBridge devices
+    description: Per-device Roku or RCP output settings.
+    fields:
+      name: {name: Device name, description: Exact advertised SoundBridge device name.}
+      exclude: {name: Exclude, description: Hide this device from the speaker list.}
+      clear_on_close: {name: Clear on close, description: Control whether disconnecting clears the SoundBridge library selection.}
+  mpd:
+    name: MPD
+    description: MPD discovery behavior. Client and artwork ports are fixed by the App.
+    fields:
+      enable_httpd_plugin: {name: Advertise HTTP output, description: Announce an MPD httpd output for clients that support local stream playback.}
+  sqlite:
+    name: SQLite
+    description: Advanced database pragmas. Non-default values can increase corruption risk.
+    fields:
+      pragma_cache_size_library: {name: Library cache pages, description: SQLite page-cache size for the library database.}
+      pragma_cache_size_cache: {name: DAAP cache pages, description: SQLite page-cache size for the DAAP cache database.}
+      pragma_journal_mode: {name: Journal mode, description: SQLite journal mode. WAL and OFF materially change durability behavior.}
+      pragma_synchronous: {name: Synchronous mode, description: SQLite synchronous level; 0 is OFF, 1 NORMAL, and 2 FULL.}
+      pragma_mmap_size_library: {name: Library mmap bytes, description: Bytes reserved for memory-mapped library database I/O. Zero disables mmap.}
+      pragma_mmap_size_cache: {name: Cache mmap bytes, description: Bytes reserved for memory-mapped cache database I/O. Zero disables mmap.}
+      vacuum: {name: Vacuum on startup, description: Vacuum databases during startup to potentially reduce their size.}
+  streaming:
+    name: HTTP audio streaming
+    description: Encoding settings for remote stream.mp3 clients.
+    fields:
+      sample_rate: {name: Sample rate, description: Sample rate used for HTTP audio streams.}
+      bit_rate: {name: MP3 bit rate, description: MP3 streaming bit rate in kilobits per second.}
   shairport:
-    name: Shairport (AirPlay receiver)
-    description: Built-in shairport-sync AirPlay receiver that pipes audio into OwnTone for multiroom redistribution.
+    name: AirPlay receiver pipe
+    description: Focused Shairport Sync receiver feeding OwnTone through a fixed stereo PCM pipe.
     fields:
-      name:
-        name: Advertised name
-        description: AirPlay name advertised by shairport-sync.
-      metadata_enabled:
-        name: Metadata
-        description: Forward now-playing metadata (title/artist/cover) to OwnTone. Note that the metadata pipe also carries the AirPlay source volume (pvol), which OwnTone applies to the player volume — disable this to fully lock the volume.
+      name: {name: Advertised name, description: AirPlay receiver name shown to phones and computers.}
+      password: {name: Receiver password, description: Optional password required to stream to this receiver.}
+      metadata_enabled: {name: Forward metadata, description: Forward title, artist, artwork, and source-volume metadata. Source-volume metadata can change OwnTone's player volume.}
+      ignore_volume_control: {name: Ignore source volume, description: Pass audio at full level instead of applying the source device's volume. This does not suppress volume messages forwarded through metadata.}
+      pipe_sample_rate: {name: Pipe sample rate, description: PCM sample rate used by both Shairport Sync and OwnTone.}
+      pipe_sample_format: {name: Pipe sample format, description: Signed little-endian PCM depth used by both Shairport Sync and OwnTone.}

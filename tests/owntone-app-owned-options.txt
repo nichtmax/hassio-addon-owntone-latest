@@ -1,0 +1,15 @@
+# OwnTone template settings fixed by the Home Assistant App.
+general.uid
+general.db_path
+general.db_backup_path
+general.logfile
+general.websocket_port
+general.bind_address
+general.cache_dir
+library.port
+library.directories
+library.pipe_autostart
+airplay_shared.control_port
+airplay_shared.timing_port
+mpd.port
+mpd.http_port

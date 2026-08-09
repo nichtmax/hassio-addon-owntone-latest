@@ -1,5 +1,14 @@
 # Changelog
 
+## 29.3-shairport21
+
+- Fix startup: create `/etc/owntone/` before copying the config (the base
+  image's own init creates it later, so the first boot failed with
+  `cp: can't create /etc/owntone/owntone.conf`).
+- Only overlay a persisted config from the same major version (29.x uses
+  `database.db`; a 28.x persisted config has `songs3.db` paths and would
+  break startup).
+
 ## 29.3-shairport20
 
 **Major: migrated to the official `owntone/owntone:latest` (29.3) base image.**

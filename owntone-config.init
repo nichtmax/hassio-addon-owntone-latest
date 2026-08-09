@@ -25,6 +25,9 @@ depend() {
 start() {
     ebegin "Preparing OwnTone directories"
     mkdir -p "$SHARE_DIR" "$SHARE_DIR/dbase_and_logs" "$SHARE_DIR/music"
+    # /etc/owntone is created by the base image's own init script, but that
+    # runs after this service — create it here so the config copy works.
+    mkdir -p /etc/owntone
     chown -R owntone:owntone "$SHARE_DIR" 2>/dev/null || true
     eend 0
 
@@ -33,7 +36,10 @@ start() {
     # Start from the upstream template, then overlay the persisted config if it
     # exists (so manual edits survive container restarts).
     cp "$TEMPLATE_PATH" "$CONFIG_PATH"
-    if [ -f "$PERSIST_CONFIG" ]; then
+    # Only overlay a persisted config from the same major version — a 28.x
+    # persisted config has songs3.db paths and lacks 29.x options, which would
+    # break startup. Detect by the db filename: 29.x uses database.db.
+    if [ -f "$PERSIST_CONFIG" ] && grep -q 'database\.db' "$PERSIST_CONFIG"; then
         cp "$PERSIST_CONFIG" "$CONFIG_PATH"
     fi
 

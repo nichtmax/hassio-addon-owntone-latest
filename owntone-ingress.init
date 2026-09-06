@@ -1,0 +1,23 @@
+#!/sbin/openrc-run
+# shellcheck shell=sh
+# OpenRC consumes these service variables.
+# shellcheck disable=SC2034
+description="OwnTone Home Assistant ingress HTTP and WebSocket proxy"
+supervisor=supervise-daemon
+command=/usr/sbin/nginx
+command_args="-c /etc/owntone-ingress.conf"
+command_args_foreground="-g 'daemon off;'"
+pidfile=/run/owntone-ingress.supervisor.pid
+respawn_delay=5
+respawn_max=0
+retry="TERM/5/KILL/5"
+output_log=/proc/1/fd/1
+error_log=/proc/1/fd/2
+
+depend() {
+    need owntone
+}
+
+start_pre() {
+    /usr/sbin/nginx -t -c /etc/owntone-ingress.conf
+}

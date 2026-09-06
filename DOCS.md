@@ -99,7 +99,23 @@ failed AirPlay handshakes. The existing session interruption setting is
 preserved. A successful OPTIONS response verifies the control endpoint, not
 sender Wi-Fi, multicast discovery, or end-to-end audio playback.
 
-Deployment: refresh the App store and update OwnTone to `29.3-shairport27`.
+Deployment: refresh the App store and update OwnTone to the latest version.
 The update briefly restarts the App; no Home Assistant Core restart is needed.
 Keep an App backup before updating. To roll back, restore that backup or rebuild
 the previous source revision. Receiver health checks require no new options.
+
+## Live updates in the Home Assistant sidebar
+
+The sidebar uses an ingress-only Nginx listener on port 3692. It accepts requests
+only from Home Assistant Supervisor (`172.30.32.2`), forwards HTTP to OwnTone
+on 3689, and forwards `/ws` upgrades to its notify service on 3688. A small
+script loaded before the app rewrites notify sockets to the current ingress
+path and origin, including HTTPS/WSS. Direct access on port 3689 stays native.
+
+After updating, close and reopen the sidebar page to load the new entrypoint.
+No additional port forwarding or Home Assistant Core restart is required.
+
+Proxy development test (disposable Alpine with nginx, python3 and
+py3-websocket-client): `python3 tests/integration-ingress.py`. The test binds
+ports 3688, 3689 and 3692 and must not run alongside a live OwnTone instance.
+The regular suite also requires Node.js for the ingress URL tests.

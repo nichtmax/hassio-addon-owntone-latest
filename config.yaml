@@ -1,5 +1,5 @@
 name: OwnTone server
-version: 29.3-shairport26
+version: 29.3-shairport27
 slug: owntone-server
 description: >-
   OwnTone music server with AirPlay, Chromecast, MPD, internet radio, and a

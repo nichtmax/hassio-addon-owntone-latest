@@ -83,3 +83,23 @@ Host networking is required for multicast discovery. OwnTone binds its web/API
 and DAAP service on 3689, websocket service on 3688, MPD on 6600, and fixed
 AirPlay output ports on 3690/3691. Shairport Sync uses its standard AirPlay
 receiver ports. Avoid running another instance on the same host concurrently.
+
+## Automatic AirPlay recovery
+
+OpenRC supervises Shairport Sync and restarts a crashed receiver after 10
+seconds. After a 60-second startup grace period, it checks localhost:5000 every
+30 seconds using a non-playing RTSP OPTIONS request. Three failed probes, each
+bounded to three seconds and separated by five seconds, trigger receiver-only
+recovery. A successful retry cancels recovery. Checks do not start a stream,
+change the queue, or alter room selection. OwnTone's existing Supervisor HTTP
+watchdog remains enabled for failures of the whole server.
+
+Receiver stdout/stderr are sent to the App log. Recovery messages identify
+failed AirPlay handshakes. The existing session interruption setting is
+preserved. A successful OPTIONS response verifies the control endpoint, not
+sender Wi-Fi, multicast discovery, or end-to-end audio playback.
+
+Deployment: refresh the App store and update OwnTone to `29.3-shairport27`.
+The update briefly restarts the App; no Home Assistant Core restart is needed.
+Keep an App backup before updating. To roll back, restore that backup or rebuild
+the previous source revision. Receiver health checks require no new options.

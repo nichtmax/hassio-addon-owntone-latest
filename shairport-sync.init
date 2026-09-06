@@ -5,7 +5,7 @@
 # Receives AirPlay from phones, writes raw PCM to a named pipe that OwnTone
 # watches (pipe_autostart) and redistributes to all enabled AirPlay outputs.
 #
-# Adapted from the old s6-overlay svc-shairport/run script.
+# OpenRC supervises the process and checks the actual RTSP endpoint.
 
 # OpenRC consumes this variable.
 # shellcheck disable=SC2034
@@ -13,7 +13,18 @@ description="shairport-sync AirPlay receiver (phone -> pipe -> OwnTone)"
 
 PIPE=/share/owntone/music/AirPlay
 METADATA_PIPE=/share/owntone/music/AirPlay.metadata
-CONF=/etc/shairport-sync.conf
+# Keep the receiver in the foreground so OpenRC owns and reaps it.
+supervisor=supervise-daemon
+command=/usr/bin/shairport-sync
+command_args="-c /etc/shairport-sync.conf"
+pidfile=/run/shairport-sync.supervisor.pid
+respawn_delay=10
+respawn_max=0
+retry="TERM/5/KILL/5"
+healthcheck_delay=60
+healthcheck_timer=30
+output_log=/proc/1/fd/1
+error_log=/proc/1/fd/2
 
 depend() {
     need owntone
@@ -43,17 +54,10 @@ start_pre() {
     ebegin "Prepared shairport-sync audio pipe at $PIPE"
 }
 
-start() {
-    ebegin "Starting shairport-sync"
-    # Run in the foreground (OpenRC supervises via start-stop-daemon).
-    start-stop-daemon --start --background --make-pidfile \
-        --pidfile /run/shairport-sync.pid \
-        --exec /usr/bin/shairport-sync -- -c "$CONF"
-    eend $?
+healthcheck() {
+    /usr/local/bin/shairport-healthcheck
 }
 
-stop() {
-    ebegin "Stopping shairport-sync"
-    start-stop-daemon --stop --pidfile /run/shairport-sync.pid --exec /usr/bin/shairport-sync
-    eend $?
+unhealthy() {
+    ewarn "AirPlay handshake failed three times; restarting only shairport-sync"
 }

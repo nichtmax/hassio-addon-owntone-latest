@@ -59,7 +59,8 @@ LABEL \
 RUN apk add --no-cache \
         libconfig \
         jq \
-        popt
+        popt \
+        python3
 
 COPY --from=shairport-build /tmp/shairport-install/usr/bin/shairport-sync \
     /usr/bin/shairport-sync
@@ -82,6 +83,7 @@ RUN sed -i 's/^depend() {$/depend() {\n    need owntone-config avahi-daemon/' \
     && sed -i '/need avahi-dnsconfd/d' /etc/init.d/owntone
 
 # shairport-sync service: AirPlay receiver that pipes PCM into OwnTone.
+COPY --chmod=755 shairport-healthcheck.py /usr/local/bin/shairport-healthcheck
 COPY --chmod=755 shairport-sync.init /etc/init.d/shairport-sync
 RUN ln -sf /etc/init.d/shairport-sync /etc/runlevels/default/shairport-sync
 

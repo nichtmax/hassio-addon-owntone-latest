@@ -1,3 +1,9 @@
+## 29.3-shairport27
+
+- Supervise the AirPlay receiver and automatically restart it after crashes.
+- Recover from repeated failed RTSP handshakes without restarting OwnTone.
+- Forward receiver output to App logs; add bounded network-probe tests.
+
 # Changelog
 
 ## 29.3-shairport26

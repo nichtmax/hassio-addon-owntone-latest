@@ -10,4 +10,5 @@ fi
 shellcheck "$ROOT/render-config.sh" "$ROOT/owntone-config.init" \
     "$ROOT/shairport-sync.init" "$ROOT/tests/test-renderer.sh"
 "$ROOT/tests/test-renderer.sh"
+python3 -m unittest discover -s "$ROOT/tests" -p "test_*.py"
 echo "All tests passed"

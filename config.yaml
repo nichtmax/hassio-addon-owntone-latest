@@ -1,5 +1,5 @@
 name: OwnTone server
-version: 29.3-shairport27
+version: 29.3-shairport28
 slug: owntone-server
 description: >-
   OwnTone music server with AirPlay, Chromecast, MPD, internet radio, and a
@@ -18,7 +18,7 @@ apparmor: true
 environment:
   RUST_LOG: warn,libmdns=error
 ingress: true
-ingress_port: 3689
+ingress_port: 3692
 ingress_stream: true
 panel_icon: mdi:music-circle
 init: false

@@ -60,7 +60,8 @@ RUN apk add --no-cache \
         libconfig \
         jq \
         popt \
-        python3
+        python3 \
+        nginx
 
 COPY --from=shairport-build /tmp/shairport-install/usr/bin/shairport-sync \
     /usr/bin/shairport-sync
@@ -91,3 +92,9 @@ RUN ln -sf /etc/init.d/shairport-sync /etc/runlevels/default/shairport-sync
 # for AirPlay discovery; the base image only has owntone+syslog there).
 RUN ln -sf /etc/init.d/dbus /etc/runlevels/default/dbus \
     && ln -sf /etc/init.d/avahi-daemon /etc/runlevels/default/avahi-daemon
+
+# A single authenticated ingress listener carries both HTTP and notify sockets.
+COPY ingress.conf /etc/owntone-ingress.conf
+COPY ingress-websocket.js /usr/local/share/owntone-addon/ingress-websocket.js
+COPY --chmod=755 owntone-ingress.init /etc/init.d/owntone-ingress
+RUN ln -sf /etc/init.d/owntone-ingress /etc/runlevels/default/owntone-ingress

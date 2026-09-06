@@ -1,3 +1,8 @@
+## 29.3-shairport28
+
+- Route sidebar WebSocket notifications through authenticated Home Assistant ingress.
+- Add a supervised ingress proxy while preserving direct LAN HTTP and WebSocket ports.
+
 ## 29.3-shairport27
 
 - Supervise the AirPlay receiver and automatically restart it after crashes.

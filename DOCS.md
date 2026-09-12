@@ -119,3 +119,14 @@ Proxy development test (disposable Alpine with nginx, python3 and
 py3-websocket-client): `python3 tests/integration-ingress.py`. The test binds
 ports 3688, 3689 and 3692 and must not run alongside a live OwnTone instance.
 The regular suite also requires Node.js for the ingress URL tests.
+
+## macOS AirPlay receivers
+
+The App defaults OwnTone’s `general.user_agent` to `AirPlay/490.16`. macOS 27
+can reject `owntone/29.3` with 403 and “sender not admissible” before pairing
+or streaming starts. The optional General client identifier setting overrides
+this default. It applies to OwnTone’s outgoing requests, including AirPlay
+and HTTP sources; it does not change receiver access settings.
+
+Rollback: restore the pre-update App backup, or set the client identifier to
+`owntone/29.3` and restart the App to restore the previous identifier.

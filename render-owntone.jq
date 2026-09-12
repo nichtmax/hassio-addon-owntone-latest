@@ -43,7 +43,7 @@ def airplay_sections($items):
 | ($root.shairport.pipe_sample_rate // 44100 | tonumber) as $pipe_rate
 | ($root.shairport.pipe_sample_format // "S16_LE") as $pipe_format
 | (if $pipe_format == "S32_LE" then 32 else 16 end) as $pipe_bits
-| (($root.general // {}) + {
+| ({user_agent: "AirPlay/490.16"} + ($root.general // {}) + {
     uid: "owntone",
     db_path: "/share/owntone/dbase_and_logs/songs3.db",
     db_backup_path: "/share/owntone/dbase_and_logs/songs3.bak",

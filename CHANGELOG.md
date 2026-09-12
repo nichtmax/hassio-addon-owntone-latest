@@ -1,3 +1,8 @@
+## 29.3-shairport29
+
+- Use an AirPlay-compatible client identifier so macOS receivers accept OwnTone connections.
+- Allow an optional General client identifier override; existing options inherit the compatible default.
+
 ## 29.3-shairport28
 
 - Route sidebar WebSocket notifications through authenticated Home Assistant ingress.

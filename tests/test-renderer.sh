@@ -19,6 +19,10 @@ ruby -ryaml -rjson -e \
     "$ROOT/config.yaml" > "$TMP/default.json"
 
 render default "$TMP/default.json"
+grep -F 'user_agent = "AirPlay/490.16"' "$TMP/default/owntone.conf" >/dev/null
+jq '.general.user_agent = "custom-client/1.0"' "$TMP/default.json" > "$TMP/user-agent.json"
+render user-agent "$TMP/user-agent.json"
+grep -F 'user_agent = "custom-client/1.0"' "$TMP/user-agent/owntone.conf" >/dev/null
 grep -F 'db_path = "/share/owntone/dbase_and_logs/songs3.db"' "$TMP/default/owntone.conf" >/dev/null
 grep -F 'pipe_sample_rate = 44100' "$TMP/default/owntone.conf" >/dev/null
 grep -F 'pipe_bits_per_sample = 16' "$TMP/default/owntone.conf" >/dev/null

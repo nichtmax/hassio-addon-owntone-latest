@@ -4,6 +4,7 @@ configuration:
     description: Core OwnTone server behavior. Storage paths and ports are managed by the App.
     fields:
       admin_password: {name: Admin password, description: Password for the web interface. Trusted networks can connect without it.}
+      user_agent: {name: Client identifier, description: Optional User-Agent override. Defaults to AirPlay/490.16 for compatibility with macOS AirPlay receivers.}
       loglevel: {name: Log level, description: Amount of detail written to the OwnTone log.}
       trusted_networks: {name: Trusted networks, description: Networks or keywords such as lan and localhost that may connect without authorization.}
       ipv6: {name: IPv6, description: Enable IPv6 listeners and discovery.}

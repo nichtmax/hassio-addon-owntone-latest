@@ -1,3 +1,8 @@
+## 29.3-shairport30
+
+- Avoid restarting a healthy Multiroom receiver when Classic AirPlay rejects watchdog connections during an active session.
+- Keep bounded idle handshake checks and process crash recovery.
+
 ## 29.3-shairport29
 
 - Use an AirPlay-compatible client identifier so macOS receivers accept OwnTone connections.

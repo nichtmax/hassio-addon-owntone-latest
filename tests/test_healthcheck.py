@@ -1,6 +1,7 @@
 import importlib.util
 from pathlib import Path
 import socket
+import tempfile
 import threading
 import time
 import unittest
@@ -53,16 +54,40 @@ class HealthcheckTests(unittest.TestCase):
     def test_transient_failure_does_not_restart(self):
         check = Mock(side_effect=[False, True])
         sleep = Mock()
-        self.assertTrue(healthcheck.healthy(check, sleep))
+        self.assertTrue(healthcheck.healthy(check, sleep, active=lambda: False))
         self.assertEqual(check.call_count, 2)
         sleep.assert_called_once_with(5)
 
     def test_three_failures_required(self):
         check = Mock(return_value=False)
         sleep = Mock()
-        self.assertFalse(healthcheck.healthy(check, sleep))
+        self.assertFalse(healthcheck.healthy(check, sleep, active=lambda: False))
         self.assertEqual(check.call_count, 3)
         self.assertEqual(sleep.call_count, 2)
+
+    def test_active_sender_skips_probe(self):
+        check = Mock()
+        self.assertTrue(healthcheck.healthy(check, Mock(), active=lambda: True))
+        check.assert_not_called()
+
+    def test_sender_connecting_during_probe_prevents_restart(self):
+        check = Mock(return_value=False)
+        sleep = Mock()
+        self.assertTrue(healthcheck.healthy(check, sleep, active=Mock(side_effect=[False, True])))
+        sleep.assert_not_called()
+
+    def test_kernel_socket_states_ipv4_and_ipv6(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            table = Path(tmp) / "tcp"
+            for address in ("0100007F", "00000000000000000000000001000000"):
+                for port, state, expected in ((5000, "01", True), (5001, "01", False),
+                                               (5000, "0A", False), (5000, "08", False)):
+                    with self.subTest(address=address, port=port, state=state):
+                        table.write_text(f"header\n0: {address}:{port:04X} {address}:ABCD {state} 0\n")
+                        self.assertEqual(healthcheck.has_active_session(tables=[str(table)]), expected)
+            table.write_text("header\nmalformed\n0: bad remote 01\n")
+            self.assertFalse(healthcheck.has_active_session(tables=[str(table)]))
+            self.assertFalse(healthcheck.has_active_session(tables=[str(table)+"missing"]))
 
 
 if __name__ == "__main__":

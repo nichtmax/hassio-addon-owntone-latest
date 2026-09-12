@@ -130,3 +130,16 @@ and HTTP sources; it does not change receiver access settings.
 
 Rollback: restore the pre-update App backup, or set the client identifier to
 `owntone/29.3` and restart the App to restore the previous identifier.
+
+## Receiver health checks during playback
+
+Classic Shairport 5.2.1 rejects new TCP connections while a sender owns the
+session and interruption is disabled. The watchdog therefore checks Linux TCP
+state for established connections on receiver port 5000 before probing OPTIONS,
+and again after a failed probe to cover a sender connecting during the check.
+Idle receivers still require a valid RTSP response; three failures trigger
+receiver-only recovery. IPv4 and IPv6 sessions are recognized.
+
+An established connection proves session presence, not audio flow. Stale sessions
+rely on Shairport's timeout/TCP keepalive; crashes still use OpenRC supervision.
+The watchdog never reads the audio FIFO, which would steal audio from OwnTone.
